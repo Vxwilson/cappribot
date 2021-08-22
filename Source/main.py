@@ -3,7 +3,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 import time
 import pyperclip
-import Texts.text
+import Source.Texts.text
 
 
 def text_parser(str):
@@ -228,7 +228,7 @@ if __name__ == '__main__':
         print("messenger no element found")
 
     # standard_text_parser(Texts.text.quotey)
-    simple_text_parser(Texts.text.quotey)
+    simple_text_parser(Source.Texts.text.quotey)
 
     time.sleep(0.5)
     instatext.close()
