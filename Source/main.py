@@ -3,8 +3,11 @@ import random
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
+import tkinter.font
 import pickle
 from messengerhandler import Handler as Handler
+from tooltip import ToolTip
+import tooltip
 
 
 class Application(tk.Frame):
@@ -35,10 +38,12 @@ class Application(tk.Frame):
 
         self.link_label = ttk.Label(self.login_frame, text="Link:")
         self.link_label.grid(row=2, column=0)
+        tooltip.CreateToolTip(self.link_label, text='Enter the numerical part of the web link to recipient.\n'
+                                                    'For example, from the link \'https://www.messenger.com/t/100014936762209/\',\n'
+                                                    'you would want to enter 100014936762209')
         self.link_entry = ttk.Entry(self.login_frame)
         self.link_entry.insert("end", "100000178957922" if not self.data else self.data["link"])
         self.link_entry.grid(row=2, column=1)
-
         self.input_frame = ttk.LabelFrame(text="Text")
         self.input_frame.grid(row=1, column=0, sticky="nsew")
         self.input_frame.grid_rowconfigure([0], weight=1)
@@ -46,6 +51,12 @@ class Application(tk.Frame):
 
         self.input_label = ttk.Label(self.input_frame, text="Input")
         self.input_label.grid(row=0, column=0)
+        tooltip.CreateToolTip(self.input_label, text='Rules:\n'
+                                                    'First paragraph consists of global hashtags (marked by \'#\');\n'
+                                                     'Second paragraph consists of optional hashtags (marked by \'&\')\n'
+                                                     'Start each entry with \'$$\', followed by -name-, -brand-, \n'
+                                                     '-size-, -price-; then measurements in inch. Space each entry with \'$$\' \n'
+                                                     'and use optional hashtags with \'&{index}\'')
         self.input_text = tk.Text(self.input_frame)
         self.input_text.insert("end", """
 Example (notice the symbols)
@@ -136,7 +147,10 @@ Length 13.5
 
 root = tk.Tk()
 # ttk.Style().configure("TButton", padding=6, relief="flat", foreground="#E8E8E8", background="#292929")
-root.geometry("1000x563")
+default_font = tk.font.nametofont("TkDefaultFont")
+print(tk.font.families())
+default_font.configure(family="Garamond", size=13)
+root.geometry("1366x768")
 root.title("Cappribot v0.1.0a")
 root.iconphoto(False, tk.PhotoImage(file='Source/Resources/Icon/gradient_less_saturated.png'))
 root.resizable(False, False)
