@@ -1,7 +1,7 @@
 #Cappribot v0.1.0a
 Cappribot is a specialized program made to automate the process of sending texts to Facebook Messenger client. Currently, it also supports auto generating Instagram caption entries by automatically changing the font style and apppending specific hashtags.
 
-![img.png](img.png)
+![img.png](Source/img.png)
 
 #Requirements
 Due to specific Selenium driver, Microsoft Edge browser version 92 is required. Work is in progress to allow all browsers to access the program. Microsoft Edge is available at
