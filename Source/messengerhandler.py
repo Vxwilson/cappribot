@@ -11,7 +11,7 @@ class Handler(object):
     def __init__(self):
         # include path to chromedriver here
         self.chromepath = "E:/Users/Documents/UsefulExes/chromedriver.exe"
-        self.edgepath = "E:/Users/Documents/UsefulExes/msedgedriver92.exe"
+        self.edgepath = "Source/Resources/Drivers/msedgedriver92.exe"
         self.instatext = None
         self.textfield = None
         self.messenger = None
