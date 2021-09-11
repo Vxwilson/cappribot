@@ -213,8 +213,6 @@ class Handler(object):
         # messenger.get('https://www.messenger.com/t/100014533062209')  # yongie
         # self.messenger.get('https://www.messenger.com/t/100000178957922')  # kreg
         link_str ='https://www.messenger.com/t/' + linktext
-        print(linktext)
-        print(link_str)
         self.messenger.get(link_str)
         try:
             time.sleep(0.5)

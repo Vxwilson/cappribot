@@ -1,5 +1,4 @@
 import ctypes
-import random
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -8,6 +7,8 @@ import pickle
 from messengerhandler import Handler as Handler
 from tooltip import ToolTip
 import tooltip
+import Texts.text
+import tkinterextension
 
 
 class Application(tk.Frame):
@@ -17,8 +18,32 @@ class Application(tk.Frame):
         self.handler = Handler()
         self.master = master
         # self.pack()
-        self.create_widgets()
         style = self.darkstyle()
+
+        self.save_cred = tk.BooleanVar()
+        self.save_cred.set(True if not self.data else self.data["save_cred"])
+
+        self.menubar = tk.Menu(root)
+        self.filemenu = tk.Menu(self.menubar, tearoff=0)
+        # self.filemenu.add_command(label="New")
+        # self.filemenu.add_command(label="Open")
+        # self.filemenu.add_command(label="Save")
+
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label="Exit", command=root.quit)
+        self.menubar.add_cascade(label="File", menu=self.filemenu)
+
+        self.actionmenu = tk.Menu(self.menubar, tearoff=0)
+        self.actionmenu.add_command(label="Autofill credentials", command=self.autofill_creds)
+        if self.data["email"] is False:
+            self.actionmenu.entryconfig("Autofill credentials", state="disabled")
+        # self.actionmenu.add_checkbutton(label="Save credentials", onvalue=1, offvalue=0, variable=self.save_cred)
+        self.menubar.add_cascade(label="Actions", menu=self.actionmenu)
+
+        self.helpmenu = tk.Menu(self.menubar, tearoff=0)
+        self.helpmenu.add_command(label="About...", command=lambda: tkinterextension.raise_frame(self.help_frame))
+        self.menubar.add_cascade(label="Help", menu=self.helpmenu)
+        root.config(menu=self.menubar)
 
         self.login_frame = ttk.LabelFrame(text="Login")
         self.login_frame.grid(row=0, column=0, sticky="nsew")
@@ -27,22 +52,18 @@ class Application(tk.Frame):
 
         self.email_label = ttk.Label(self.login_frame, text="Facebook email:")
         self.email_label.grid(row=0, column=0)
-        self.email_entry = ttk.Entry(self.login_frame)
-        self.email_entry.insert("end", 'veixhen@hotmail.com' if not self.data else self.data["email"])
+        self.email_entry = tkinterextension.LabelEntry(self.login_frame, label="test@email.com")
         self.email_entry.grid(row=0, column=1)
 
         self.password_label = ttk.Label(self.login_frame, text="Password:")
         self.password_label.grid(row=1, column=0)
-        self.password_entry = ttk.Entry(self.login_frame)
+        self.password_entry = ttk.Entry(self.login_frame, show="*")
         self.password_entry.grid(row=1, column=1)
 
         self.link_label = ttk.Label(self.login_frame, text="Link:")
         self.link_label.grid(row=2, column=0)
-        tooltip.CreateToolTip(self.link_label, text='Enter the numerical part of the web link to recipient.\n'
-                                                    'For example, from the link \'https://www.messenger.com/t/100014936762209/\',\n'
-                                                    'you would want to enter 100014936762209')
-        self.link_entry = ttk.Entry(self.login_frame)
-        self.link_entry.insert("end", "100000178957922" if not self.data else self.data["link"])
+        tooltip.CreateToolTip(self.link_label, text=Texts.text.link_tooltip)
+        self.link_entry = tkinterextension.LabelEntry(self.login_frame, label="100000178957952")
         self.link_entry.grid(row=2, column=1)
         self.input_frame = ttk.LabelFrame(text="Text")
         self.input_frame.grid(row=1, column=0, sticky="nsew")
@@ -51,44 +72,9 @@ class Application(tk.Frame):
 
         self.input_label = ttk.Label(self.input_frame, text="Input")
         self.input_label.grid(row=0, column=0)
-        tooltip.CreateToolTip(self.input_label, text='Rules:\n'
-                                                    'First paragraph consists of global hashtags (marked by \'#\');\n'
-                                                     'Second paragraph consists of optional hashtags (marked by \'&\')\n'
-                                                     'Start each entry with \'$$\', followed by -name-, -brand-, \n'
-                                                     '-size-, -price-; then measurements in inch. Space each entry with \'$$\' \n'
-                                                     'and use optional hashtags with \'&{index}\'')
+        tooltip.CreateToolTip(self.input_label, text=Texts.text.input_tooltip)
         self.input_text = tk.Text(self.input_frame)
-        self.input_text.insert("end", """
-Example (notice the symbols)
-_______________________________
-#thecatthrifts #thrifting #preloved #secondhand #thriftmalaysia #onlinethriftstore #thriftstore #stylewithus #thriftwithusthursdays #thriftstorefinds #eighthdrop #rainbow #tops #shorts #lowrise #unique #vintage #retro #valuebuy #slowfashionisthewaytogo #sustainablefashion #sustainability #supportsmallbusiness #smallbusiness #staysafestayhome #thecatthriftsavailable
-&thecatthriftsavailabletop &thecatthriftsavailablebottom &thecatthriftsavailabledress &thecatthriftsavailablejacket
-
-$$
-Red long sleeve shirt
-
--
-fits XS-S
-7/10
-RM13 (includes postage)
-
-Shoulder 14
-Sleeves 20
-Bust 13.5
-Length 19
-&1
-$$
-Red skirt with safety pants
-
--
-fits M-small L
-8/10 
-RM13 (includes postage)
-
-Waist 15
-Hips 19.5
-Length 13.5
-&2""" if not self.data else self.data["text"])
+        self.input_text.insert("end", Texts.text.examplequote if not self.data["email"] else self.data["text"])
         self.input_text.grid(row=1, column=0)
 
         self.send_fb = ttk.Button(master=self.input_frame, text="Send to Messenger",
@@ -100,16 +86,33 @@ Length 13.5
         self.technical_frame.grid_rowconfigure(0, weight=1)
         self.technical_frame.grid_columnconfigure(0, weight=1)
 
+        self.save_cred_box = ttk.Checkbutton(master=self.technical_frame, text="Save credentials", variable=self.save_cred)
+        self.save_cred_box.grid(row=0, column=0, sticky="n")
+        tooltip.CreateToolTip(self.save_cred_box, text=Texts.text.save_cred_tooltip)
         self.quit = ttk.Button(master=self.technical_frame, text="QUIT",
                                command=self.master.destroy, style="Accentbutton")
-        self.quit.grid(row=0, column=0, sticky="s")
+        # self.quit.grid(row=0, column=0, sticky="s")
 
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)  # to fix blurry text
 
-    def create_widgets(self):
-        string = ""
+        ##help frame
+        self.help_frame = ttk.LabelFrame(text="Help", width=500, height=300)
+        self.help_frame.grid_propagate(False)
+        self.login_frame.grid_rowconfigure([0, 1], weight=1)
+        self.login_frame.grid_columnconfigure(0, weight=1)
+        self.help_frame.grid(row=0, column=0)
+        self.help_label = ttk.Label(self.help_frame, text="""
+        Cappribot version 0.1.0
+        refer to GitHub readme.md for more information
+        """)
+        self.help_label.grid(row=0, column=0)
+        self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame), style="Accentbutton")
+        self.close_frame_button.grid(row=1, column=1)
+
+        self.help_frame.lower()
+
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)  # to fix blurry text
 
     def darkstyle(self):
         ''' Return a dark style to the window'''
@@ -121,6 +124,14 @@ Length 13.5
         style.configure("Togglebutton", foreground='white')
         return style
 
+    def autofill_creds(self):
+        if self.data is not False:
+            self.email_entry.delete(0, tk.END)
+            self.email_entry.insert("end", self.data["email"])
+            self.link_entry.delete(0, tk.END)
+            self.link_entry.insert("end", self.data["link"])
+        else:
+            print("no previous credentials entered.")
     def handle_messenger(self):
         # self.send_fb["state"] = "disabled"
         self.save_data()
@@ -139,20 +150,27 @@ Length 13.5
             return {}
 
     def save_data(self):
-        data = {'email': self.email_entry.get(), 'link': self.link_entry.get(),
-                'text': self.input_text.get("1.0", tk.END)}
+        print(self.save_cred.get())
+        if self.save_cred.get() is False:
+            data = {'email': False, 'link': False,
+                    'text': self.input_text.get("1.0", tk.END),
+                    'save_cred': self.save_cred.get()}
+        else:
+            data = {'email': self.email_entry.get(), 'link': self.link_entry.get(),
+                    'text': self.input_text.get("1.0", tk.END),
+                    'save_cred': self.save_cred.get()}
         with open('Source/Resources/save.txt', 'wb') as file:
             pickle.dump(data, file)
-
 
 root = tk.Tk()
 # ttk.Style().configure("TButton", padding=6, relief="flat", foreground="#E8E8E8", background="#292929")
 default_font = tk.font.nametofont("TkDefaultFont")
-print(tk.font.families())
+# print(tk.font.families())
 default_font.configure(family="Garamond", size=13)
 root.geometry("1366x768")
-root.title("Cappribot v0.1.0a")
+root.title("Cappribot v0.1.5a")
 root.iconphoto(False, tk.PhotoImage(file='Source/Resources/Icon/gradient_less_saturated.png'))
 root.resizable(False, False)
 app = Application(master=root)
 app.mainloop()
+

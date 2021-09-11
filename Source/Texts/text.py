@@ -783,3 +783,55 @@ excode = """
 # def inch_to_cm(inch):
 #     return round(inch * 2.54, 1)
 """
+
+examplequote = """
+Example (notice the symbols)
+_______________________________
+#thecatthrifts #thrifting #preloved #secondhand #thriftmalaysia #onlinethriftstore #thriftstore #stylewithus #thriftwithusthursdays #thriftstorefinds #eighthdrop #rainbow #tops #shorts #lowrise #unique #vintage #retro #valuebuy #slowfashionisthewaytogo #sustainablefashion #sustainability #supportsmallbusiness #smallbusiness #staysafestayhome #thecatthriftsavailable
+&thecatthriftsavailabletop &thecatthriftsavailablebottom &thecatthriftsavailabledress &thecatthriftsavailablejacket
+
+$$
+Red long sleeve shirt
+
+-
+fits XS-S
+7/10
+RM13 (includes postage)
+
+Shoulder 14
+Sleeves 20
+Bust 13.5
+Length 19
+&1
+$$
+Red skirt with safety pants
+
+-
+fits M-small L
+8/10 
+RM13 (includes postage)
+
+Waist 15
+Hips 19.5
+Length 13.5
+&2
+"""
+
+link_tooltip = """
+Enter the numerical part of the web link to recipient.\n
+For example, from the link \'https://www.messenger.com/t/100014936762209/\',\n
+you would want to enter 100014936762209
+"""
+
+input_tooltip ="""
+First paragraph consists of global hashtags (marked by \'#\');\n
+Second paragraph consists of optional hashtags (marked by \'&\')\n
+Start each entry with \'$$\', followed by -name-, -brand-, \n
+-size-, -price-; then measurements in inch. Space each entry with \'$$\' \n
+and use optional hashtags with \'&{index}\'
+"""
+
+save_cred_tooltip = """
+If checked, credentials (EXCEPT password) will be saved upon pressing the \n
+button 'Send to Messenger' and can be auto-filled next time the program \n
+is opened."""
