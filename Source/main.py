@@ -4,10 +4,8 @@ import tkinter as tk
 import tkinter.filedialog as tdialog
 import tkinter.ttk as ttk
 import tkinter.font
-import tkcalendar
 import pickle
 from messengerhandler import Handler as Handler
-from tooltip import ToolTip
 import tooltip
 import Texts.text
 import tkinterextension

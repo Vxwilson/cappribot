@@ -4,8 +4,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 import time
 import pyperclip
 
-import Source.Texts.text
-
 
 def inch_to_cm(inch):
     return round(inch * 2.54, 1)
