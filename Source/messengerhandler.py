@@ -7,32 +7,43 @@ import pyperclip
 import Source.Texts.text
 
 
+def inch_to_cm(inch):
+    return round(inch * 2.54, 1)
+
+
+# append hashtag based on globally defined hashtags and special tags (specific use case)
+def append_hashtag(output, hashtags, specialtags, staglist):
+    dots = ''
+    for i in range(8):
+        dots += ".\n"
+    output = output.strip() + '\n' + dots + hashtags.strip()
+    for number in staglist:
+        output += " " + specialtags[number - 1].strip()
+    return output
+
+
 class Handler(object):
     def __init__(self):
         # include path to chromedriver here
         self.chromepath = "E:/Users/Documents/UsefulExes/chromedriver.exe"
         self.edgepath = "Source/Resources/Drivers/msedgedriver92.exe"
-        self.instatext = None
+        self.lingo_text_field = None
         self.textfield = None
         self.messenger = None
 
-    def text_parser(self, str):
-        for splitstr in str.split('$'):
-            if splitstr.isspace():
-                continue
-            if len(splitstr) == 0:
-                continue
-            i = 0
-            for c in splitstr:
-                if c.isdigit() is False:
-                    break
-                i += 1
-            sum = 0
-            for a in range(i):
-                sum += int(splitstr[a]) * (10 ** (i - a - 1))
-            self.get_modified_text(sum, splitstr)
+    def text_sender(self, string, times=1):
+        for i in range(times):
+            self.send_to_messenger(string)
 
-    def simple_text_parser(self, strin, times=1):
+    def yongie_text_parser(self, strin, times=1):
+        self.lingo_text_field = webdriver.Edge(self.edgepath)
+        self.lingo_text_field.get('https://lingojam.com/FontsForInstagram')
+
+        try:
+            self.textfield = self.lingo_text_field.find_element_by_id('english-text')
+        except:
+            print("no element found")
+
         hashtags = ''
         specialtags = ''
         for id, para in enumerate(strin.strip().split("$$")):
@@ -96,79 +107,89 @@ class Handler(object):
                                     pass
                             # print(f"value: {val}")
                             newstring += sen.split()[0] + ": " + str(val) + "\"" + ("flat" if bust else "") + "/" + str(
-                                self.inch_to_cm(val)) + "cm" + '\n'
+                                inch_to_cm(val)) + "cm" + '\n'
 
-                        newstring = 'Measurements: \n' + self.preappender(newstring)
+                        newstring = 'Measurements: \n' + newstring.strip() + \
+                                    '\nModel reference: \nHeight: 162cm \n\nDm to order or if you have any inquiries,' \
+                                    ' we won\'t bite!'
+                        # newstring = 'Measurements: \n' + self.preappender(newstring) + newstring.strip() +
+                        # '\nModel reference: \nHeight: 162cm \n\nDm to order or if you have any inquiries,
+                        # we won\'t bite!'
                         output = output + '\n' + self.get_modified_text(2, newstring, True)
             print("sending", id)
-            output = self.append_hashtag(output, hashtags, specialtags.strip().split(' '), staglist)
+            output = append_hashtag(output, hashtags, specialtags.strip().split(' '), staglist)
             # print(output)
             for i in range(times):
                 self.send_to_messenger(output)
+        self.lingo_text_field.close()
 
-    def standard_text_parser(self, strin, times=1):
-        hashtags = ''
-        specialtags = ''
-        for id, para in enumerate(strin.strip().split("$$")):
-            if id == 0:
-                splittedtag = para.strip().split("&")
-                for idx, stag in enumerate(splittedtag):
-                    if idx == 0:
-                        for id, tag in enumerate(stag.strip().split("#")):
-                            if id == 0:
-                                continue
-                            hashtags += "#" + tag
-                        continue
-                    specialtags += "#" + stag
-                continue
-            output = ''
-            splittedstring = para.strip().split("\n$")
-            staglist = []
-            for idx, splitstr in enumerate(splittedstring):
-                spllistr = splitstr.split('$')
-                for i, strin in enumerate(spllistr):
+    # def text_parser(self, str):
+    #     for splitstr in str.split('$'):
+    #         if splitstr.isspace():
+    #             continue
+    #         if len(splitstr) == 0:
+    #             continue
+    #         i = 0
+    #         for c in splitstr:
+    #             if c.isdigit() is False:
+    #                 break
+    #             i += 1
+    #         sum = 0
+    #         for a in range(i):
+    #             sum += int(splitstr[a]) * (10 ** (i - a - 1))
+    #         self.get_modified_text(sum, splitstr)
+    # def standard_text_parser(self, strin, times=1):
+    #     hashtags = ''
+    #     specialtags = ''
+    #     for id, para in enumerate(strin.strip().split("$$")):
+    #         if id == 0:
+    #             splittedtag = para.strip().split("&")
+    #             for idx, stag in enumerate(splittedtag):
+    #                 if idx == 0:
+    #                     for id, tag in enumerate(stag.strip().split("#")):
+    #                         if id == 0:
+    #                             continue
+    #                         hashtags += "#" + tag
+    #                     continue
+    #                 specialtags += "#" + stag
+    #             continue
+    #         output = ''
+    #         splittedstring = para.strip().split("\n$")
+    #         staglist = []
+    #         for idx, splitstr in enumerate(splittedstring):
+    #             spllistr = splitstr.split('$')
+    #             for i, strin in enumerate(spllistr):
+    #
+    #                 if strin.isspace():
+    #                     continue
+    #                 if len(strin) == 0:
+    #                     continue
+    #                 if strin[0].isdigit() is False:
+    #                     break
+    #                 if i == 0:  # weird situation, i is 0 in the last iteration
+    #                     stagspllit = strin.strip().split("&")
+    #                     for ii, stagstr in enumerate(stagspllit):
+    #                         if ii == 0:
+    #                             continue
+    #                         staglist += [int(stagstr[0])]
+    #                         strin = strin.strip()[:-2]
+    #                     strin = self.preappender(strin)
+    #                 sum = int(strin[0])
+    #
+    #                 output = output + self.get_modified_text(sum, strin)
+    #
+    #                 for a in range(strin.count('\n') - 1):  # add lines to the end of a part
+    #                     output += '\n'
+    #             output += '\n'
+    #         output = self.append_hashtag(output, hashtags, specialtags.strip().split(' '), staglist)
+    #         for i in range(times):
+    #             self.send_to_messenger(output)
 
-                    if strin.isspace():
-                        continue
-                    if len(strin) == 0:
-                        continue
-                    if strin[0].isdigit() is False:
-                        break
-                    if i == 0:  # weird situation, i is 0 in the last iteration
-                        stagspllit = strin.strip().split("&")
-                        for ii, stagstr in enumerate(stagspllit):
-                            if ii == 0:
-                                continue
-                            staglist += [int(stagstr[0])]
-                            strin = strin.strip()[:-2]
-                        strin = self.preappender(strin)
-                    sum = int(strin[0])
+    # def preappender(self, strin):
+    #     sentence = '\nModel reference: \nHeight: 162cm \n\nDm to order or if you have any inquiries, we won\'t bite!'
+    #     return strin.strip() + sentence
 
-                    output = output + self.get_modified_text(sum, strin)
-
-                    for a in range(strin.count('\n') - 1):  # add lines to the end of a part
-                        output += '\n'
-                output += '\n'
-            output = self.append_hashtag(output, hashtags, specialtags.strip().split(' '), staglist)
-            for i in range(times):
-                self.send_to_messenger(output)
-
-    def preappender(self, strin):
-        sentence = '\nModel reference: \nHeight: 162cm \n\nDm to order or if you have any inquiries, we won\'t bite!'
-        return strin.strip() + sentence
-
-    def append_hashtag(self, output, hashtags, specialtags, staglist):
-        dots = ''
-        for i in range(8):
-            dots += ".\n"
-        output = output.strip() + '\n' + dots + hashtags.strip()
-        for number in staglist:
-            output += " " + specialtags[number - 1].strip()
-        return output
-
-    def inch_to_cm(self, inch):
-        return round(inch * 2.54, 1)
-
+    # get translated font style from fontlingo.com
     def get_modified_text(self, index, strin, autoadd=False):
         if autoadd is True:
             strin = str(index) + strin
@@ -179,13 +200,14 @@ class Handler(object):
         # sentences = browser.find_element_by_id('ghetto-text').get_attribute('value').split(str(index))
         sentences = None
         if index == 1:
-            sentences = self.instatext.find_element_by_id('ghetto-text').get_attribute('value').split('𝟏', 1)
+            sentences = self.lingo_text_field.find_element_by_id('ghetto-text').get_attribute('value').split('𝟏', 1)
             sentences = sentences[1].split('𝟭', 1)
         elif index == 2:
-            sentences = self.instatext.find_element_by_id('ghetto-text').get_attribute('value').split('𝟮', 1)
+            sentences = self.lingo_text_field.find_element_by_id('ghetto-text').get_attribute('value').split('𝟮', 1)
             sentences = sentences[1].split('2', 1)
         return sentences[0].strip()
 
+    # actual action of sending messages to facebook messenger
     def send_to_messenger(self, finishedstr):
         pyperclip.copy(finishedstr)
         self.messenger.find_element_by_xpath("//*[@data-editor]").click()
@@ -200,19 +222,10 @@ class Handler(object):
         actions.send_keys(Keys.ENTER)
         actions.perform()
 
-    def send_message(self, text, emailtext, passwordtext, linktext):
-        # # instatext = webdriver.Chrome(chromepath)
-        self.instatext = webdriver.Edge(self.edgepath)
-        self.instatext.get('https://lingojam.com/FontsForInstagram')
-        try:
-            self.textfield = self.instatext.find_element_by_id('english-text')
-        except:
-            print("no element found")
+    # opens scrapper and select handling method based on [option] parameter
+    def handle_message(self, text, emailtext, passwordtext, linktext, option="yongie", iteration=1):
         self.messenger = webdriver.Edge(self.edgepath)
-        # messenger = webdriver.Chrome(path)
-        # messenger.get('https://www.messenger.com/t/100014533062209')  # yongie
-        # self.messenger.get('https://www.messenger.com/t/100000178957922')  # kreg
-        link_str ='https://www.messenger.com/t/' + linktext
+        link_str = 'https://www.messenger.com/t/' + linktext
         self.messenger.get(link_str)
         try:
             time.sleep(0.5)
@@ -226,10 +239,11 @@ class Handler(object):
         except:
             print("messenger no element found")
 
-        # standard_text_parser(Texts.text.quotey)
-        self.simple_text_parser(text)
+        if option == 'Plain text':
+            self.text_sender(text, iteration)
+        elif option == 'Caption':
+            self.yongie_text_parser(text, iteration)
 
         time.sleep(0.5)
-        self.instatext.close()
         self.messenger.close()
         return True
