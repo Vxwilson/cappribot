@@ -34,6 +34,8 @@ class Application(tk.Frame):
 
         self.menubar = tk.Menu(root)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
+        # self.filemenu.add_command(label="Undo", command=self.input_text.undo, accelerator="Ctrl+Z")
+        # self.filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
         self.filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
         self.filemenu.add_command(label="Save credentials", command=self.save_data, accelerator="Ctrl+S")
         self.filemenu.add_separator()
@@ -83,9 +85,12 @@ class Application(tk.Frame):
         self.input_label = ttk.Label(self.input_frame, text="Input")
         self.input_label.grid(row=0, column=0)
         tooltip.CreateToolTip(self.input_label, text=Texts.text.input_tooltip)
-        self.input_text = tk.Text(self.input_frame)
+        self.input_text = tk.Text(self.input_frame, undo=True)
         self.input_text.insert("end", Texts.text.examplequote if not self.data or not self.data["email"] else self.data["text"])
         self.input_text.grid(row=1, column=0)
+
+        self.filemenu.add_command(label="Undo", command=self.input_text.edit_undo, accelerator="Ctrl+Z")
+        self.filemenu.add_command(label="Redo", command=self.input_text.edit_redo, accelerator="Ctrl+Y")
 
         self.send_fb = ttk.Button(master=self.input_frame, text="Send to Messenger",
                                   command=self.handle_messenger)
@@ -109,15 +114,16 @@ class Application(tk.Frame):
         self.iteration_box = ttk.Spinbox(master=self.technical_frame, width=3, from_=1, to=100, wrap=True, textvariable=self.iteration_value)
         self.iteration_box.grid(row=1, column=1, sticky="w")
 
-        self.cal = tkcalendar.DateEntry(self.technical_frame, width=10)
-        self.cal.grid(row=2, column=1, sticky="w")
+        # self.cal = tkcalendar.DateEntry(self.technical_frame, width=10)
+        # self.cal.grid(row=2, column=1, sticky="w")
 
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
         # menu popup
-        self.popup = tk.Menu(self.input_frame, tearoff=0)
-        self.popup.add_command(label="Clear", command=self.clear_input)
+        self.popup = tk.Menu(self.input_text, tearoff=0)
+        self.popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+F")
+        self.popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
         self.popup.add_separator()
 
         # help frame
@@ -140,12 +146,14 @@ class Application(tk.Frame):
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # to fix blurry text
 
     def bind_keys(self):
-        self.input_frame.bind("<Button-3>", self.menu_popup)
+        self.input_text.bind("<Button-3>", self.menu_popup)
 
         # shortcuts
         root.bind('<Control-Return>', lambda e: self.handle_messenger())
         root.bind('<Control-o>', lambda e: self.read_input())
         root.bind('<Control-s>', lambda e: self.save_data())
+        self.input_text.bind('<Alt-d>', lambda e: self.add_divider())
+        self.input_text.bind('<Control-q>', lambda e: self.clear_input())
 
         root.bind('<Alt-p>', lambda e: self.open_settings_())
         root.bind('<Alt-v>', lambda e: self.autofill_creds())
@@ -178,6 +186,11 @@ class Application(tk.Frame):
         finally:
             self.popup.grab_release()
 
+    # add a divider symbol to the text, separating the text message
+    def add_divider(self):
+        self.input_text.insert(tk.INSERT, "\n$$\n\n")
+        # print(self.input_text.index(tk.INSERT))
+
     def clear_input(self):
         self.input_text.delete('1.0', tk.END)
 
@@ -187,7 +200,8 @@ class Application(tk.Frame):
             data = file.read()
             file.close()
             self.input_text.delete('1.0', tk.END)
-            self.input_text.insert("end", data.decode("utf-8"))
+            # self.input_text.insert("end", data.decode("utf-8"))
+            self.input_text.insert("end", data)
 
     def autofill_creds(self):
         if self.data is not False:
@@ -256,7 +270,7 @@ default_font = tk.font.nametofont("TkDefaultFont")
 # print(tk.font.families())
 # default_font.configure(family="Garamond", size=13)
 default_font.configure(size=11)
-root.geometry("1050x600")
+# root.geometry("1050x600")
 root.title("Cappribot v0.2.0a")
 root.iconphoto(False, tk.PhotoImage(file='Source/Resources/Icon/gradient_less_saturated.png'))
 root.resizable(False, False)
