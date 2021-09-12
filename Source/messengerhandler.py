@@ -37,6 +37,7 @@ class Handler(object):
 
     def yongie_text_parser(self, strin, times=1):
         self.lingo_text_field = webdriver.Edge(self.edgepath)
+        self.lingo_text_field.set_window_position(-10000, 0)
         self.lingo_text_field.get('https://lingojam.com/FontsForInstagram')
 
         try:
@@ -226,16 +227,17 @@ class Handler(object):
     def handle_message(self, text, emailtext, passwordtext, linktext, option="yongie", iteration=1):
         self.messenger = webdriver.Edge(self.edgepath)
         link_str = 'https://www.messenger.com/t/' + linktext
+        self.messenger.set_window_position(-10000, 0)
         self.messenger.get(link_str)
         try:
-            time.sleep(0.5)
+            time.sleep(0.9)
             email = self.messenger.find_element_by_id('email')
             email.send_keys(emailtext)
             password = self.messenger.find_element_by_id('pass')
             password.send_keys(passwordtext)
             button = self.messenger.find_element_by_id('loginbutton')
             button.click()
-            time.sleep(5)
+            time.sleep(4.5)
         except:
             print("messenger no element found")
 

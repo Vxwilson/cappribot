@@ -4,14 +4,13 @@ import tkinter as tk
 import tkinter.filedialog as tdialog
 import tkinter.ttk as ttk
 import tkinter.font
+import tkcalendar
 import pickle
 from messengerhandler import Handler as Handler
 from tooltip import ToolTip
 import tooltip
 import Texts.text
 import tkinterextension
-
-
 
 
 class Application(tk.Frame):
@@ -101,13 +100,17 @@ class Application(tk.Frame):
         self.method_label.grid(row=0, column=0, sticky="w")
         self.send_method = ttk.Combobox(master=self.technical_frame, width=10, state="readonly", textvariable=self.method)
         self.send_method['values'] = ('Plain text', 'Caption')
-        self.send_method.current(0 if not self.settings_data or "method" not in self.settings_data else self.settings_data["method"])
+        self.send_method.current(0 if not self.settings_data or "method" not in self.settings_data
+                                 else self.settings_data["method"])
         self.send_method.grid(row=0, column=1, sticky="w")
 
         self.iteration_label = ttk.Label(master=self.technical_frame, text="Iteration:")
         self.iteration_label.grid(row=1, column=0, sticky="w")
         self.iteration_box = ttk.Spinbox(master=self.technical_frame, width=3, from_=1, to=100, wrap=True, textvariable=self.iteration_value)
         self.iteration_box.grid(row=1, column=1, sticky="w")
+
+        self.cal = tkcalendar.DateEntry(self.technical_frame, width=10)
+        self.cal.grid(row=2, column=1, sticky="w")
 
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
@@ -168,9 +171,6 @@ class Application(tk.Frame):
 
         apply_button = ttk.Button(master=settings, text="Apply", command=self.apply_settings)
         apply_button.grid(row=1, column=0, sticky="ews")
-
-        # self.save_cred_box.grid(row=0, column=0, sticky="nw")
-        # tooltip.CreateToolTip(self.save_cred_box, text=Texts.text.save_cred_tooltip)
 
     def menu_popup(self, event):
         try:
