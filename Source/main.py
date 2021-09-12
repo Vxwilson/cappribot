@@ -35,9 +35,6 @@ class Application(tk.Frame):
 
         self.menubar = tk.Menu(root)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
-        # self.filemenu.add_command(label="New")
-        # self.filemenu.add_command(label="Open")
-        # self.filemenu.add_command(label="Save")
         self.filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
         self.filemenu.add_command(label="Save credentials", command=self.save_data, accelerator="Ctrl+S")
         self.filemenu.add_separator()
@@ -52,7 +49,6 @@ class Application(tk.Frame):
 
         if not self.data or (self.settings_data and self.settings_data["save_cred"]) is False:
             self.actionmenu.entryconfig("Autofill credentials", state="disabled")
-        # self.actionmenu.add_checkbutton(label="Save credentials", onvalue=1, offvalue=0, variable=self.save_cred)
         self.menubar.add_cascade(label="Actions", menu=self.actionmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -118,9 +114,8 @@ class Application(tk.Frame):
 
         # menu popup
         self.popup = tk.Menu(self.input_frame, tearoff=0)
-        self.popup.add_command(label="Clear")
+        self.popup.add_command(label="Clear", command=self.clear_input)
         self.popup.add_separator()
-        # self.popup.add_command(label="Save")
 
         # help frame
         self.help_frame = ttk.LabelFrame(text="Help", width=500, height=300)
@@ -182,6 +177,9 @@ class Application(tk.Frame):
             self.popup.tk_popup(event.x_root, event.y_root, 0)
         finally:
             self.popup.grab_release()
+
+    def clear_input(self):
+        self.input_text.delete('1.0', tk.END)
 
     def read_input(self):
         file = tdialog.askopenfile(parent=root, mode='rb', title='')
@@ -258,7 +256,7 @@ default_font = tk.font.nametofont("TkDefaultFont")
 # print(tk.font.families())
 # default_font.configure(family="Garamond", size=13)
 default_font.configure(size=11)
-root.geometry("1050x700")
+root.geometry("1050x600")
 root.title("Cappribot v0.2.0a")
 root.iconphoto(False, tk.PhotoImage(file='Source/Resources/Icon/gradient_less_saturated.png'))
 root.resizable(False, False)
