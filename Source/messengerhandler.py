@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
+from msedge.selenium_tools import Edge, EdgeOptions
 import time
 import pyperclip
 
@@ -159,9 +160,16 @@ class Handler(object):
 
     # opens scrapper and select handling method based on [option] parameter
     def handle_message(self, text, emailtext, passwordtext, linktext, option="yongie", iteration=1):
-        self.messenger = webdriver.Edge(self.edgepath)
+        edge_options = EdgeOptions()
+        edge_options.use_chromium = True
+        edge_options.add_argument('headless')
+        edge_options.add_argument('disable-gpu')
+        edge_options.add_argument('window-size=1400x1000')
+
+        self.messenger = webdriver.Chrome(self.edgepath, options=edge_options)
+        # self.messenger = webdriver.Edge(self.edgepath)
         link_str = 'https://www.messenger.com/t/' + linktext
-        self.messenger.set_window_position(-10000, 0)
+        # self.messenger.set_window_position(-10000, 0)
         self.messenger.get(link_str)
         try:
             time.sleep(0.9)

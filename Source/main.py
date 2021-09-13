@@ -20,7 +20,6 @@ class Application(tk.Frame):
         self.handler = Handler()
         self.master = master
         # self.pack()
-        style = self.darkstyle()
 
         self.save_cred = tk.BooleanVar()
         self.save_cred.set(True if not self.settings_data else self.settings_data["save_cred"])
@@ -120,7 +119,7 @@ class Application(tk.Frame):
 
         # menu popup
         self.popup = tk.Menu(self.input_text, tearoff=0)
-        self.popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+F")
+        self.popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
         self.popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
         self.popup.add_separator()
 
@@ -135,7 +134,8 @@ class Application(tk.Frame):
         refer to GitHub readme.md for more information
         """)
         self.help_label.grid(row=0, column=0)
-        self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame), style="Accentbutton")
+        self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame))
+        # self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame), style="Accentbutton")
         self.close_frame_button.grid(row=1, column=1)
 
         self.help_frame.lower()
@@ -155,16 +155,6 @@ class Application(tk.Frame):
 
         root.bind('<Alt-p>', lambda e: self.open_settings_())
         root.bind('<Alt-v>', lambda e: self.autofill_creds())
-
-    def darkstyle(self):
-        ''' Return a dark style to the window'''
-
-        style = ttk.Style(self)
-        self.tk.call('source', 'Source/Resources/Style/azure dark.tcl')
-        style.theme_use('azure')
-        style.configure("Accentbutton", foreground='white')
-        style.configure("Togglebutton", foreground='white')
-        return style
 
     def open_settings_(self):
         settings = tk.Toplevel(root)
@@ -267,6 +257,10 @@ root = tk.Tk()
 default_font = tk.font.nametofont("TkDefaultFont")
 # print(tk.font.families())
 # default_font.configure(family="Garamond", size=13)
+root.tk.call('source', 'Source/Resources/Style/azure.tcl')
+root.tk.call("set_theme", "dark")
+# style.configure("Accentbutton", foreground='white')
+# style.configure("Togglebutton", foreground='white')
 default_font.configure(size=11)
 # root.geometry("1050x600")
 root.title("Cappribot v0.2.0a")
