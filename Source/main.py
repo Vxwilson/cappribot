@@ -5,8 +5,12 @@ import tkinter.filedialog as tdialog
 import tkinter.ttk as ttk
 import tkinter.font
 import datetime
+from PIL import Image, ImageTk
 import time
 import pickle
+import pystray
+from infi.systray import SysTrayIcon
+
 from messengerhandler import Handler as Handler
 import tooltip
 import Texts.text
@@ -108,9 +112,11 @@ class Application(tk.Frame):
         self.filemenu.add_command(label="Undo", command=self.input_text.edit_undo, accelerator="Ctrl+Z")
         self.filemenu.add_command(label="Redo", command=self.input_text.edit_redo, accelerator="Ctrl+Y")
 
-        self.send_fb = ttk.Button(master=self.input_frame, text="Send to Messenger",
+        self.minimize = ttk.Button(self.input_frame, text="Minimize", command=self.hide_window)
+        self.minimize.grid(row=2, column=0, sticky="e", padx=100)
+        self.send_fb = ttk.Button(master=self.input_frame, text="Send now",
                                   command=self.handle_messenger)
-        self.send_fb.grid(row=2, column=0)
+        self.send_fb.grid(row=2, column=0, sticky="e")
 
         self.technical_frame = ttk.LabelFrame(text="Options")
         self.technical_frame.grid(row=1, column=1, sticky="new")
@@ -237,6 +243,22 @@ class Application(tk.Frame):
             self.link_entry.insert("end", self.data["link"])
         else:
             print("no previous credentials entered.")
+
+    def hide_window(self):
+        def clicked(icon=None):
+            self.show_window()
+            try:
+                systray.shutdown()
+            except:
+                print()
+                pass
+        root.withdraw()
+        menu_options = (("Show window", None, clicked),)
+        systray = SysTrayIcon("Source/Resources/Icon/picturexviewer.ico", "Cappribot", menu_options, default_menu_index=0)
+        systray.start()
+
+    def show_window(self):
+        root.deiconify()
 
     def handle_messenger(self):
         print("handling")
