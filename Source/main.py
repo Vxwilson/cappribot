@@ -4,11 +4,14 @@ import tkinter as tk
 import tkinter.filedialog as tdialog
 import tkinter.ttk as ttk
 import tkinter.font
+import datetime
+import time
 import pickle
 from messengerhandler import Handler as Handler
 import tooltip
 import Texts.text
 import tkinterextension
+import scheduler
 
 
 class Application(tk.Frame):
@@ -24,10 +27,21 @@ class Application(tk.Frame):
         self.save_cred = tk.BooleanVar()
         self.save_cred.set(True if not self.settings_data else self.settings_data["save_cred"])
 
+        self.headless = tk.BooleanVar()
+        self.headless.set(True if not self.settings_data or "headless" not in self.settings_data else
+                          self.settings_data["headless"])
+
         self.method = tk.StringVar()
 
         self.iteration_value = tk.IntVar()
-        self.iteration_value.set(1 if (not self.settings_data or "iteration" not in self.settings_data) else self.settings_data["iteration"])
+        self.iteration_value.set(
+            1 if (not self.settings_data or "iteration" not in self.settings_data) else self.settings_data["iteration"])
+
+        # scheduler
+        self.hour = tk.IntVar()
+        self.hour.set(datetime.datetime.now().strftime("%H"))
+        self.min = tk.IntVar()
+        self.min.set(datetime.datetime.now().strftime("%M"))
 
         self.menubar = tk.Menu(root)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
@@ -42,7 +56,11 @@ class Application(tk.Frame):
         self.menubar.add_cascade(label="File", menu=self.filemenu)
 
         self.actionmenu = tk.Menu(self.menubar, tearoff=0)
-        self.actionmenu.add_command(label="Send", underline=0, command=self.handle_messenger, accelerator="Ctrl+Enter")
+        # self.actionmenu.add_command(label="Send", underline=0, command=self.handle_messenger, accelerator="Ctrl+Enter")
+        self.actionmenu.add_command(label="Senfd", underline=0,
+                                    command=lambda: scheduler.check_alarm(root, self.handle_messenger,
+                                                                          self.hour.get(), self.min.get()),
+                                    accelerator="Ctrl+Enter")
         self.actionmenu.add_command(label="Autofill credentials", command=self.autofill_creds, accelerator="Alt+V")
 
         if not self.data or (self.settings_data and self.settings_data["save_cred"]) is False:
@@ -83,7 +101,8 @@ class Application(tk.Frame):
         self.input_label.grid(row=0, column=0)
         tooltip.CreateToolTip(self.input_label, text=Texts.text.input_tooltip)
         self.input_text = tk.Text(self.input_frame, undo=True)
-        self.input_text.insert("end", Texts.text.examplequote if not self.data or not self.data["email"] else self.data["text"])
+        self.input_text.insert("end", Texts.text.examplequote if not self.data or not self.data["email"] else self.data[
+            "text"])
         self.input_text.grid(row=1, column=0)
 
         self.filemenu.add_command(label="Undo", command=self.input_text.edit_undo, accelerator="Ctrl+Z")
@@ -94,22 +113,36 @@ class Application(tk.Frame):
         self.send_fb.grid(row=2, column=0)
 
         self.technical_frame = ttk.LabelFrame(text="Options")
-        self.technical_frame.grid(row=1, column=1,  sticky="new")
+        self.technical_frame.grid(row=1, column=1, sticky="new")
         self.technical_frame.grid_rowconfigure([0, 1], weight=1)
         self.technical_frame.grid_columnconfigure([0, 1], weight=1)
 
         self.method_label = ttk.Label(master=self.technical_frame, text="Send option:")
         self.method_label.grid(row=0, column=0, sticky="w")
-        self.send_method = ttk.Combobox(master=self.technical_frame, width=10, state="readonly", textvariable=self.method)
+        self.send_method = ttk.Combobox(master=self.technical_frame, width=10, state="readonly",
+                                        textvariable=self.method)
         self.send_method['values'] = ('Plain text', 'Caption')
         self.send_method.current(0 if not self.settings_data or "method" not in self.settings_data
                                  else self.settings_data["method"])
         self.send_method.grid(row=0, column=1, sticky="w")
 
         self.iteration_label = ttk.Label(master=self.technical_frame, text="Iteration:")
-        self.iteration_label.grid(row=1, column=0, sticky="w")
-        self.iteration_box = ttk.Spinbox(master=self.technical_frame, width=3, from_=1, to=100, wrap=True, textvariable=self.iteration_value)
+        self.iteration_label.grid(row=1, column=0, sticky="w", pady=15)
+        self.iteration_box = ttk.Spinbox(master=self.technical_frame, width=4, from_=1, to=100, wrap=True,
+                                         textvariable=self.iteration_value)
         self.iteration_box.grid(row=1, column=1, sticky="w")
+
+        self.scheduler_label = ttk.Label(master=self.technical_frame, text="Schedule:")
+        self.scheduler_label.grid(row=2, column=0, sticky="w")
+        # todo check possible bug that occur when 00 is passed instead of 0
+        self.scheduler_hour = ttk.Spinbox(master=self.technical_frame, width=5, from_=0, to=23, increment=1,
+                                          textvariable=self.hour, wrap=True)
+        self.scheduler_hour.grid(row=2, column=1, sticky="w", padx=0)
+        self.scheduler_minute = ttk.Spinbox(master=self.technical_frame, width=5, from_=0, to=59, increment=15,
+                                            textvariable=self.min, wrap=True)
+        self.scheduler_minute.grid(row=2, column=1, sticky="w", padx=55)
+        self.scheduler_hourlabel = ttk.Label(self.technical_frame, text="Hours")
+        self.scheduler_hourlabel.grid(row=2, column=1, sticky="w", padx=110)
 
         # self.cal = tkcalendar.DateEntry(self.technical_frame, width=10)
         # self.cal.grid(row=2, column=1, sticky="w")
@@ -134,7 +167,8 @@ class Application(tk.Frame):
         refer to GitHub readme.md for more information
         """)
         self.help_label.grid(row=0, column=0)
-        self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame))
+        self.close_frame_button = ttk.Button(master=self.help_frame, text="Close",
+                                             command=lambda: tkinterextension.lower_frame(self.help_frame))
         # self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame), style="Accentbutton")
         self.close_frame_button.grid(row=1, column=1)
 
@@ -165,8 +199,12 @@ class Application(tk.Frame):
         save_cred_box.grid(row=0, column=0, sticky="ews")
         tooltip.CreateToolTip(save_cred_box, text=Texts.text.save_cred_tooltip)
 
+        headless_box = ttk.Checkbutton(settings, text="Headless browser", variable=self.headless)
+        headless_box.grid(row=1, column=0, sticky="ews")
+        tooltip.CreateToolTip(headless_box, text="When headless is applied, no browser with be shown during the autonomous process.")
+
         apply_button = ttk.Button(master=settings, text="Apply", command=self.apply_settings)
-        apply_button.grid(row=1, column=0, sticky="ews")
+        apply_button.grid(row=2, column=0, sticky="ews")
 
     def menu_popup(self, event):
         try:
@@ -201,9 +239,13 @@ class Application(tk.Frame):
             print("no previous credentials entered.")
 
     def handle_messenger(self):
+        print("handling")
         self.save_data()
-        self.handler.handle_message(self.input_text.get("1.0", tk.END), self.email_entry.get(), self.password_entry.get(),
-                                    self.link_entry.get(), self.method.get(), self.iteration_value.get())
+        # scheduler.alarm(root, print('hi'), self.hour.get(), self.min.get())
+        self.handler.handle_message(self.input_text.get("1.0", tk.END), self.email_entry.get(),
+                                    self.password_entry.get(),
+                                    self.link_entry.get(), self.method.get(), self.iteration_value.get()
+                                    , self.headless.get())
 
     def load_settings(self):
         if os.path.exists('Source/Resources/settings.txt'):
@@ -223,6 +265,7 @@ class Application(tk.Frame):
 
     def save_settings(self):
         data = {'save_cred': self.save_cred.get(),
+                'headless' : self.headless.get(),
                 'iteration': self.iteration_value.get(),
                 'method': self.send_method.current()}
         with open('Source/Resources/settings.txt', 'wb') as file:
@@ -268,4 +311,3 @@ root.iconphoto(False, tk.PhotoImage(file='Source/Resources/Icon/gradient_less_sa
 root.resizable(False, False)
 app = Application(master=root)
 app.mainloop()
-

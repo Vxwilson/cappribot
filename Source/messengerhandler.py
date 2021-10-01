@@ -25,7 +25,7 @@ class Handler(object):
     def __init__(self):
         # include path to chromedriver here
         self.chromepath = "E:/Users/Documents/UsefulExes/chromedriver.exe"
-        self.edgepath = "Source/Resources/Drivers/msedgedriver92.exe"
+        self.edgepath = "Source/Resources/Drivers/msedgedriver94.exe"
         self.lingo_text_field = None
         self.textfield = None
         self.messenger = None
@@ -159,10 +159,11 @@ class Handler(object):
         actions.perform()
 
     # opens scrapper and select handling method based on [option] parameter
-    def handle_message(self, text, emailtext, passwordtext, linktext, option="yongie", iteration=1):
+    def handle_message(self, text, emailtext, passwordtext, linktext, option="yongie", iteration=1, headless=True):
         edge_options = EdgeOptions()
         edge_options.use_chromium = True
-        edge_options.add_argument('headless')
+        if headless:
+            edge_options.add_argument('headless')
         edge_options.add_argument('disable-gpu')
         edge_options.add_argument('window-size=1400x1000')
 
