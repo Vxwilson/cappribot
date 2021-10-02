@@ -11,6 +11,7 @@ import time
 import pickle
 import pystray
 from infi.systray import SysTrayIcon
+from functools import partial
 
 from messengerhandler import Handler as Handler
 import tooltip
@@ -25,6 +26,7 @@ class Application(tk.Frame):
         super().__init__(master)
         self.data = self.load_data()
         self.settings_data = self.load_settings()
+        self.link_data = self.load_link()
         self.handler = Handler()
         self.scheduler = scheduler.Scheduler()
         self.master = master
@@ -58,7 +60,7 @@ class Application(tk.Frame):
         # self.filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
         # self.filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
         self.filemenu.add_command(label="Minimize", command=self.hide_window, accelerator="Ctrl+H")
-        self.filemenu.add_command(label="Save credentials", command=self.save_data, accelerator="Ctrl+S")
+        # self.filemenu.add_command(label="Save credentials", command=self.save_data, accelerator="Ctrl+S")
         self.filemenu.add_separator()
         self.filemenu.add_command(label="Preferences", command=self.open_settings_, accelerator="Alt+P")
         self.filemenu.add_separator()
@@ -74,10 +76,8 @@ class Application(tk.Frame):
         self.actionmenu.add_command(label="New task", command=lambda: self.new_instant_task(), accelerator="Control+N")
         self.actionmenu.add_command(label="Schedule new task", command=lambda: self.new_schedule(),
                                     accelerator="Control+Shift+N")
-        self.actionmenu.add_command(label="Autofill credentials", command=self.autofill_creds, accelerator="Alt+V")
-
-        if not self.data or (self.settings_data and self.settings_data["save_cred"]) is False:
-            self.actionmenu.entryconfig("Autofill credentials", state="disabled")
+        self.actionmenu.add_command(label="Set credentials", command=self.set_credentials, accelerator="Alt+C")
+        self.actionmenu.add_command(label="Add Link", command=self.add_link, accelerator="Control+L")
         self.menubar.add_cascade(label="Actions", menu=self.actionmenu)
 
         self.helpmenu = tk.Menu(self.menubar, tearoff=0)
@@ -85,26 +85,26 @@ class Application(tk.Frame):
         self.menubar.add_cascade(label="Help", menu=self.helpmenu)
         root.config(menu=self.menubar)
 
-        self.login_frame = ttk.LabelFrame(text="Login")
-        self.login_frame.grid(row=0, column=1, sticky="new")
-        self.login_frame.grid_rowconfigure([0, 1, 2], weight=1, minsize=50)
-        self.login_frame.grid_columnconfigure([0, 1], weight=1, minsize=130)
-
-        self.email_label = ttk.Label(self.login_frame, text="Facebook email:")
-        self.email_label.grid(row=0, column=0, sticky="w")
-        self.email_entry = tkinterextension.LabelEntry(self.login_frame, label="test@email.com")
-        self.email_entry.grid(row=0, column=1)
-
-        self.password_label = ttk.Label(self.login_frame, text="Password:")
-        self.password_label.grid(row=1, column=0, sticky="w")
-        self.password_entry = ttk.Entry(self.login_frame, show="*")
-        self.password_entry.grid(row=1, column=1)
-
-        self.link_label = ttk.Label(self.login_frame, text="Link:")
-        self.link_label.grid(row=2, column=0, sticky="w")
-        tooltip.CreateToolTip(self.link_label, text=Texts.text.link_tooltip)
-        self.link_entry = tkinterextension.LabelEntry(self.login_frame, label="100000178957952")
-        self.link_entry.grid(row=2, column=1)
+        # self.login_frame = ttk.LabelFrame(text="Login")
+        # self.login_frame.grid(row=0, column=1, sticky="new")
+        # self.login_frame.grid_rowconfigure([0, 1, 2], weight=1, minsize=50)
+        # self.login_frame.grid_columnconfigure([0, 1], weight=1, minsize=130)
+        #
+        # self.email_label = ttk.Label(self.login_frame, text="Facebook email:")
+        # self.email_label.grid(row=0, column=0, sticky="w")
+        # self.email_entry = tkinterextension.LabelEntry(self.login_frame, label="test@email.com")
+        # self.email_entry.grid(row=0, column=1)
+        #
+        # self.password_label = ttk.Label(self.login_frame, text="Password:")
+        # self.password_label.grid(row=1, column=0, sticky="w")
+        # self.password_entry = ttk.Entry(self.login_frame, show="*")
+        # self.password_entry.grid(row=1, column=1)
+        #
+        # self.link_label = ttk.Label(self.login_frame, text="Link:")
+        # self.link_label.grid(row=2, column=0, sticky="w")
+        # tooltip.CreateToolTip(self.link_label, text=Texts.text.link_tooltip)
+        # self.link_entry = tkinterextension.LabelEntry(self.login_frame, label="100000178957952")
+        # self.link_entry.grid(row=2, column=1)
 
         # self.input_frame = ttk.LabelFrame(text="Text")
         # self.input_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
@@ -176,8 +176,8 @@ class Application(tk.Frame):
         # help frame
         self.help_frame = ttk.LabelFrame(text="Help", width=500, height=300)
         self.help_frame.grid_propagate(False)
-        self.login_frame.grid_rowconfigure([0, 1], weight=1)
-        self.login_frame.grid_columnconfigure(0, weight=1)
+        # self.login_frame.grid_rowconfigure([0, 1], weight=1)
+        # self.login_frame.grid_columnconfigure(0, weight=1)
         self.help_frame.grid(row=0, column=0)
         self.help_label = ttk.Label(self.help_frame, text="""
         Cappribot version 0.1.0
@@ -203,15 +203,16 @@ class Application(tk.Frame):
         root.bind('<Control-Return>', lambda e: self.scheduler.try_start_alarm(root, self.handle_messenger,
                                                                                self.hour.get(), self.min.get()), )
         root.bind('<Control-o>', lambda e: self.read_input())
-        root.bind('<Control-s>', lambda e: self.save_data())
+        # root.bind('<Control-s>', lambda e: self.save_data())
         root.bind('<Control-n>', lambda e: self.new_instant_task())
+        root.bind('<Control-l>', lambda e: self.add_link())
         root.bind('<Control-Shift-N>', lambda e: self.new_schedule())
         root.bind('<Control-h>', lambda e: self.hide_window())
         # self.input_text.bind('<Alt-d>', lambda e: self.add_divider())
         # self.input_text.bind('<Control-q>', lambda e: self.clear_input())
 
         root.bind('<Alt-p>', lambda e: self.open_settings_())
-        root.bind('<Alt-v>', lambda e: self.autofill_creds())
+        root.bind('<Alt-c>', lambda e: self.set_credentials())
 
     def open_settings_(self):
         settings = tk.Toplevel(root)
@@ -239,91 +240,202 @@ class Application(tk.Frame):
         minimize_option_radio2.grid(row=2, column=0, sticky="ewn", pady=70)
         minimize_option_radio3.grid(row=2, column=0, sticky="ewn", pady=100)
 
-        apply_button = ttk.Button(master=settings, text="Apply", command=self.apply_settings)
+        clear_creds = ttk.Button(settings, text="Clear credentials", command=self.clear_creds)
+        clear_creds.grid(row=3, column=0, sticky="ews")
+        apply_button = ttk.Button(master=settings, text="Apply",
+                                  command=lambda: [self.apply_settings, settings.destroy()])
         apply_button.grid(row=4, column=0, sticky="ews")
 
+    def set_credentials(self):
+
+        def save_data():
+            self.save_settings()
+            data = {'email': email_entry.get(), 'link': link_entry.get(),
+                    'password': password_entry.get()
+                    # 'text': input_text.get("1.0", tk.END)
+                    }
+            with open('Source/Resources/save.txt', 'wb') as file:
+                pickle.dump(data, file)
+            self.data = self.load_data()
+
+        cred_window = tk.Toplevel(root)
+        cred_window.title("Save credentials")
+        cred_window.minsize(350, 250)
+
+        login_frame = ttk.LabelFrame(cred_window, text="Login")
+        login_frame.grid(row=0, column=0, sticky="new")
+        login_frame.grid_rowconfigure([0, 1, 2], weight=1, minsize=50)
+        login_frame.grid_columnconfigure([0, 1], weight=1, minsize=130)
+
+        email_label = ttk.Label(login_frame, text="Facebook email:")
+        email_label.grid(row=0, column=0, sticky="w")
+        email_entry = tkinterextension.LabelEntry(login_frame, label="example@email.com")
+        email_entry.grid(row=0, column=1)
+
+        password_label = ttk.Label(login_frame, text="Password:")
+        password_label.grid(row=1, column=0, sticky="w")
+        password_entry = tkinterextension.LabelEntry(login_frame, show="*", label="12345678")
+        password_entry.grid(row=1, column=1)
+
+        link_label = ttk.Label(login_frame, text="Default recipient (link):")
+        link_label.grid(row=2, column=0, sticky="w")
+        tooltip.CreateToolTip(link_label, text=Texts.text.link_tooltip)
+        link_entry = tkinterextension.LabelEntry(login_frame, label="100000178957952")
+        link_entry.grid(row=2, column=1)
+
+        apply_button = ttk.Button(master=cred_window, text="Save", command=lambda: [save_data(),
+                                                                                    cred_window.destroy()])
+        apply_button.grid(row=2, column=0, sticky="ew")
+
+        # autofill previous credentials
+        if bool(self.data):
+            email_entry.delete(0, tk.END)
+            email_entry.insert("end", self.data["email"])
+            password_entry.delete(0, tk.END)
+            password_entry.insert("end", self.data["password"])
+            link_entry.delete(0, tk.END)
+            link_entry.insert("end", self.data["link"])
+
+
+    def add_link(self):
+        add_link_window = tk.Toplevel(root)
+        add_link_window.title("Add link")
+        add_link_window.minsize(350, 250)
+
+        link_frame = ttk.LabelFrame(add_link_window, text="")
+        link_frame.grid(row=0, column=0, sticky="new")
+        link_frame.grid_rowconfigure([0, 1, 2], weight=1, minsize=50)
+        link_frame.grid_columnconfigure([0, 1], weight=1, minsize=130)
+
+        link_label = ttk.Label(link_frame, text="Link:")
+        link_label.grid(row=0, column=0, sticky="w")
+        link_entry = tkinterextension.LabelEntry(link_frame, label="100000178957952")
+        link_entry.grid(row=0, column=1)
+
+        name_label = ttk.Label(link_frame, text="Name:")
+        name_label.grid(row=1, column=0, sticky="w")
+        name_entry = tkinterextension.LabelEntry(link_frame, label="John")
+        name_entry.grid(row=1, column=1)
+
+        apply_button = ttk.Button(master=add_link_window, text="Save", command=lambda: [add_link()])
+        apply_button.grid(row=2, column=0, sticky="ew")
+
+        def add_link():
+            if os.path.exists('Source/Resources/link.txt'):
+                try:
+                    with open('Source/Resources/link.txt', 'r+b') as file:
+                        loaded_data = pickle.load(file)
+                except EOFError:
+                    return {}
+                if "entry" in loaded_data:
+                    entry = loaded_data["entry"]
+                    entry.append({'entry_link': link_entry.get(), 'entry_name': name_entry.get()})
+                    data = {'entry': entry}
+                else: data = data = {'entry': [{'entry_link': link_entry.get(), 'entry_name': name_entry.get()}]}
+            else:
+                data = {'entry': [{'entry_link': link_entry.get(), 'entry_name': name_entry.get()}]}
+            with open('Source/Resources/link.txt', 'wb') as file:
+                pickle.dump(data, file)
+
+            self.data = self.load_data()
+
     def new_instant_task(self):
+
         instant_task_window = tk.Toplevel(root)
         instant_task_window.title("New task")
         instant_task_window.minsize(550, 350)
 
-        self.menubar = tk.Menu(instant_task_window)
-        self.filemenu = tk.Menu(self.menubar, tearoff=0)
-        # self.filemenu.add_command(label="Undo", command=self.input_text.undo, accelerator="Ctrl+Z")
-        # self.filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
-        self.filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
-        # self.filemenu.add_command(label="Exit", command=instant_task_window.destroy())
-        self.menubar.add_cascade(label="File", menu=self.filemenu)
+        menubar = tk.Menu(instant_task_window)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        # filemenu.add_command(label="Undo", command=input_text.undo, accelerator="Ctrl+Z")
+        # filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
+        filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
+        # filemenu.add_command(label="Exit", command=instant_task_window.destroy())
+        menubar.add_cascade(label="File", menu=filemenu)
 
-        self.actionmenu = tk.Menu(self.menubar, tearoff=0)
-        # self.actionmenu.add_command(label="Send", underline=0, command=self.handle_messenger, accelerator="Ctrl+Enter")
-        self.actionmenu.add_command(label="Send", underline=0,
-                                    command=lambda: self.scheduler.try_start_alarm(root, self.handle_messenger,
-                                                                                   self.hour.get(), self.min.get()),
-                                    accelerator="Ctrl+Enter")
-        self.actionmenu.add_command(label="Get saved links")  # todo add recipient links to a save file
+        actionmenu = tk.Menu(menubar, tearoff=0)
+        actionmenu.add_command(label="Send", underline=0,
+                               command=lambda: self.handle_messenger(input_text.get("1.0", tk.END)),
+                               accelerator="Ctrl+Enter")
 
-        self.menubar.add_cascade(label="Actions", menu=self.actionmenu)
+        menubar.add_cascade(label="Actions", menu=actionmenu)
 
-        instant_task_window.config(menu=self.menubar)
+        instant_task_window.config(menu=menubar)
 
-        self.login_frame = ttk.LabelFrame(instant_task_window, text="Recipient Details")
-        self.login_frame.grid(row=0, column=1, sticky="new")
-        self.login_frame.grid_rowconfigure([0], weight=1, minsize=50)
-        self.login_frame.grid_columnconfigure([0], weight=1, minsize=130)
+        login_frame = ttk.LabelFrame(instant_task_window, text="Recipient Details")
+        login_frame.grid(row=0, column=1, sticky="new")
+        login_frame.grid_rowconfigure([0], weight=1, minsize=50)
+        login_frame.grid_columnconfigure([0], weight=1, minsize=130)
 
-        self.link_label = ttk.Label(self.login_frame, text="Link:")
-        self.link_label.grid(row=0, column=0, sticky="w")
-        tooltip.CreateToolTip(self.link_label, text=Texts.text.link_tooltip)
-        self.link_entry = tkinterextension.LabelEntry(self.login_frame, label="100000178957952")
-        self.link_entry.grid(row=0, column=1)
+        link_label = ttk.Label(login_frame, text="(Optional) Link: ")
+        link_label.grid(row=0, column=0, sticky="w")
+        tooltip.CreateToolTip(link_label, text=Texts.text.link_tooltip)
+        link_entry = tkinterextension.LabelEntry(login_frame, label="100000178957952")
+        link_entry.grid(row=0, column=1)
 
-        self.input_frame = ttk.LabelFrame(instant_task_window, text="Text")
-        self.input_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
-        self.input_frame.grid_rowconfigure([0], weight=1)
-        self.input_frame.grid_columnconfigure([0], weight=1)
+        if bool(self.data):
+            link_entry.delete(0, tk.END)
+            link_entry.insert("end", self.data["link"])
 
-        self.input_label = ttk.Label(self.input_frame, text="Input")
-        self.input_label.grid(row=0, column=0)
-        tooltip.CreateToolTip(self.input_label, text=Texts.text.input_tooltip)
-        self.input_text = tk.Text(self.input_frame, undo=True)
-        self.input_text.insert("end", Texts.text.examplequote if not self.data or not self.data["email"] else self.data[
+        def fetch_link(idx):
+            link_entry.delete(0, tk.END)
+            link_entry.insert("end", self.link_data["entry"][idx]["entry_link"])
+
+        if "entry" in self.link_data:
+            entry = self.link_data["entry"]
+            nested_menu = tk.Menu(actionmenu)
+            for index, link in enumerate(entry):
+                nested_menu.add_command(label=link["entry_name"], command=partial(fetch_link, index))
+            nested_menu.add_command(label="See all")
+            actionmenu.add_cascade(label="Auto insert links", menu=nested_menu)
+
+        input_frame = ttk.LabelFrame(instant_task_window, text="Text")
+        input_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
+        input_frame.grid_rowconfigure([0], weight=1)
+        input_frame.grid_columnconfigure([0], weight=1)
+
+        input_label = ttk.Label(input_frame, text="Input")
+        input_label.grid(row=0, column=0)
+        tooltip.CreateToolTip(input_label, text=Texts.text.input_tooltip)
+        input_text = tk.Text(input_frame, undo=True)
+        input_text.insert("end", Texts.text.examplequote if not self.data or "text" not in self.data else self.data[
             "text"])
-        self.input_text.grid(row=1, column=0)
+        input_text.grid(row=1, column=0)
 
-        self.filemenu.add_command(label="Undo", command=self.input_text.edit_undo, accelerator="Ctrl+Z")
-        self.filemenu.add_command(label="Redo", command=self.input_text.edit_redo, accelerator="Ctrl+Y")
+        filemenu.add_command(label="Undo", command=input_text.edit_undo, accelerator="Ctrl+Z")
+        filemenu.add_command(label="Redo", command=input_text.edit_redo, accelerator="Ctrl+Y")
 
-        self.technical_frame = ttk.LabelFrame(instant_task_window, text="Options")
-        self.technical_frame.grid(row=1, column=1, sticky="new")
-        self.technical_frame.grid_rowconfigure([0, 1], weight=1)
-        self.technical_frame.grid_columnconfigure([0, 1], weight=1)
+        technical_frame = ttk.LabelFrame(instant_task_window, text="Options")
+        technical_frame.grid(row=1, column=1, sticky="new")
+        technical_frame.grid_rowconfigure([0, 1], weight=1)
+        technical_frame.grid_columnconfigure([0, 1], weight=1)
 
-        self.method_label = ttk.Label(master=self.technical_frame, text="Send option:")
-        self.method_label.grid(row=0, column=0, sticky="w")
-        self.send_method = ttk.Combobox(master=self.technical_frame, width=10, state="readonly",
-                                        textvariable=self.method)
-        self.send_method['values'] = ('Plain text', 'Caption')
-        self.send_method.current(0 if not self.settings_data or "method" not in self.settings_data
-                                 else self.settings_data["method"])
-        self.send_method.grid(row=0, column=1, sticky="w")
+        method_label = ttk.Label(master=technical_frame, text="Send option:")
+        method_label.grid(row=0, column=0, sticky="w")
+        send_method = ttk.Combobox(master=technical_frame, width=10, state="readonly",
+                                   textvariable=self.method)
+        send_method['values'] = ('Plain text', 'Caption')
+        send_method.current(0 if not self.settings_data or "method" not in self.settings_data
+                            else self.settings_data["method"])
+        send_method.grid(row=0, column=1, sticky="w")
 
-        self.iteration_label = ttk.Label(master=self.technical_frame, text="Iteration:")
-        self.iteration_label.grid(row=1, column=0, sticky="w", pady=15)
-        self.iteration_box = ttk.Spinbox(master=self.technical_frame, width=4, from_=1, to=100, wrap=True,
-                                         textvariable=self.iteration_value)
-        self.iteration_box.grid(row=1, column=1, sticky="w")
+        iteration_label = ttk.Label(master=technical_frame, text="Iteration:")
+        iteration_label.grid(row=1, column=0, sticky="w", pady=15)
+        iteration_box = ttk.Spinbox(master=technical_frame, width=4, from_=1, to=100, wrap=True,
+                                    textvariable=self.iteration_value)
+        iteration_box.grid(row=1, column=1, sticky="w")
 
         instant_task_window.grid_rowconfigure(0, weight=1)
         instant_task_window.grid_columnconfigure(0, weight=1)
 
         # menu popup
-        self.popup = tk.Menu(self.input_text, tearoff=0)
-        self.popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
-        self.popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
-        self.popup.add_separator()
+        popup = tk.Menu(input_text, tearoff=0)
+        popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
+        popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
+        popup.add_separator()
 
-        apply_button = ttk.Button(master=instant_task_window, text="Send", command=self.handle_messenger)
+        apply_button = ttk.Button(master=instant_task_window, text="Send", command=lambda: [
+            self.handle_messenger(input_text.get("1.0", tk.END))])
         apply_button.grid(row=2, column=0, sticky="ews")
 
     def new_schedule(self):
@@ -347,16 +459,20 @@ class Application(tk.Frame):
 
         schedule_window.config(menu=self.menubar)
 
-        self.login_frame = ttk.LabelFrame(schedule_window, text="Recipient Details")
-        self.login_frame.grid(row=0, column=1, sticky="new")
-        self.login_frame.grid_rowconfigure([0], weight=1, minsize=50)
-        self.login_frame.grid_columnconfigure([0], weight=1, minsize=130)
+        login_frame = ttk.LabelFrame(schedule_window, text="Recipient Details")
+        login_frame.grid(row=0, column=1, sticky="new")
+        login_frame.grid_rowconfigure([0], weight=1, minsize=50)
+        login_frame.grid_columnconfigure([0], weight=1, minsize=130)
 
-        self.link_label = ttk.Label(self.login_frame, text="Link:")
-        self.link_label.grid(row=0, column=0, sticky="w")
-        tooltip.CreateToolTip(self.link_label, text=Texts.text.link_tooltip)
-        self.link_entry = tkinterextension.LabelEntry(self.login_frame, label="100000178957952")
-        self.link_entry.grid(row=0, column=1)
+        link_label = ttk.Label(login_frame, text="(Optional) Link: ")
+        link_label.grid(row=0, column=0, sticky="w")
+        tooltip.CreateToolTip(link_label, text=Texts.text.link_tooltip)
+        link_entry = tkinterextension.LabelEntry(login_frame, label="100000178957952")
+        link_entry.grid(row=0, column=1)
+
+        if bool(self.data):
+            link_entry.delete(0, tk.END)
+            link_entry.insert("end", self.data["link"])
 
         self.input_frame = ttk.LabelFrame(schedule_window, text="Text")
         self.input_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
@@ -367,8 +483,9 @@ class Application(tk.Frame):
         self.input_label.grid(row=0, column=0)
         tooltip.CreateToolTip(self.input_label, text=Texts.text.input_tooltip)
         self.input_text = tk.Text(self.input_frame, undo=True)
-        self.input_text.insert("end", Texts.text.examplequote if not self.data or not self.data["email"] else self.data[
-            "text"])
+        self.input_text.insert("end",
+                               Texts.text.examplequote if not self.data or "text" not in self.data else self.data[
+                                   "text"])
         self.input_text.grid(row=1, column=0)
 
         self.filemenu.add_command(label="Undo", command=self.input_text.edit_undo, accelerator="Ctrl+Z")
@@ -441,15 +558,6 @@ class Application(tk.Frame):
             # self.input_text.insert("end", data.decode("utf-8"))
             self.input_text.insert("end", data)
 
-    def autofill_creds(self):
-        if self.data is not False:
-            self.email_entry.delete(0, tk.END)
-            self.email_entry.insert("end", self.data["email"])
-            self.link_entry.delete(0, tk.END)
-            self.link_entry.insert("end", self.data["link"])
-        else:
-            print("no previous credentials entered.")
-
     # shows exit prompt when users press 'X' button
     def override_close(self):
         if self.minimize_radio.get() == 2:
@@ -487,14 +595,20 @@ class Application(tk.Frame):
     def show_window(self):
         root.deiconify()
 
-    def handle_messenger(self):
-        print("handling")
-        self.save_data()
+    def handle_messenger(self, text):
+        # self.save_data()
         # scheduler.alarm(root, print('hi'), self.hour.get(), self.min.get())
-        self.handler.handle_message(self.input_text.get("1.0", tk.END), self.email_entry.get(),
-                                    self.password_entry.get(),
-                                    self.link_entry.get(), self.method.get(), self.iteration_value.get()
-                                    , self.headless.get())
+        if "email" not in self.data:  # todo prompt user to set credentials
+            pass
+        else:
+            self.handler.handle_message(text, self.data["email"],
+                                        self.data["password"],
+                                        self.data["link"], self.method.get(), self.iteration_value.get()
+                                        , self.settings_data["headless"])
+        # self.handler.handle_message(self.input_text.get("1.0", tk.END), self.email_entry.get(),
+        #                             self.password_entry.get(),
+        #                             self.link_entry.get(), self.method.get(), self.iteration_value.get()
+        #                             , self.headless.get())
 
     def load_settings(self):
         if os.path.exists('Source/Resources/settings.txt'):
@@ -507,17 +621,14 @@ class Application(tk.Frame):
             return {}
 
     def apply_settings(self):
-        if self.save_cred.get() is False:
-            self.actionmenu.entryconfig("Autofill credentials", state="disabled")
-            # not required to enable when changed to True, as no credentials will be saved before this
         self.save_settings()
 
     def save_settings(self):
         data = {'save_cred': self.save_cred.get(),
                 'headless': self.headless.get(),
-                'minimize_radio': self.minimize_radio.get(),
-                'iteration': self.iteration_value.get()}
-                # 'method': self.send_method.current()}
+                'minimize_radio': self.minimize_radio.get()
+                }
+        # 'method': self.send_method.current()}
         with open('Source/Resources/settings.txt', 'wb') as file:
             pickle.dump(data, file)
 
@@ -528,21 +639,37 @@ class Application(tk.Frame):
                     return pickle.load(file)
             except EOFError:
                 return {}
-        else:
-            return {}
 
-    def save_data(self):
-        self.save_settings()
-        if self.save_cred.get() is False:
-            data = {'email': False, 'link': False,
-                    'text': self.input_text.get("1.0", tk.END)
-                    }
-        else:
-            data = {'email': self.email_entry.get(), 'link': self.link_entry.get(),
-                    'text': self.input_text.get("1.0", tk.END)
-                    }
+    def load_link(self):
+        if os.path.exists('Source/Resources/link.txt'):
+            try:
+                with open('Source/Resources/link.txt', 'r+b') as file:
+                    return pickle.load(file)
+            except EOFError:
+                return {}
+
+    def clear_creds(self):
+        data = {'email': "example@email.com", 'link': "100000178957952", 'password': "12345678"
+                #             'text': self.input_text.get("1.0", tk.END)
+                }
         with open('Source/Resources/save.txt', 'wb') as file:
             pickle.dump(data, file)
+        self.data = self.load_data()
+    # def save_data(self):
+    #     self.save_settings()
+    #     # if self.save_cred.get() is False:
+    #     #     data = {'email': False, 'link': False,
+    #     #             'text': self.input_text.get("1.0", tk.END)
+    #     #             }
+    #     # else:
+    #     #     data = {'email': self.email_entry.get(), 'link': self.link_entry.get(),
+    #     #             'text': self.input_text.get("1.0", tk.END)
+    #     #             }
+    #     data = {'email': self.email_entry.get(), 'link': self.link_entry.get(),
+    #             'text': self.input_text.get("1.0", tk.END)
+    #             }
+    #     with open('Source/Resources/save.txt', 'wb') as file:
+    #         pickle.dump(data, file)
 
 
 root = tk.Tk()
