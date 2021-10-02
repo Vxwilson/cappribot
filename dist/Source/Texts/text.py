@@ -380,7 +380,7 @@ excode = """
 
 examplequote = """
 Example (notice the symbols)
-_______________________________
+__________(remove everything on and before this line)____________
 #thecatthrifts #thrifting #preloved #secondhand #thriftmalaysia #onlinethriftstore #thriftstore #stylewithus #thriftwithusthursdays #thriftstorefinds #eighthdrop #rainbow #tops #shorts #lowrise #unique #vintage #retro #valuebuy #slowfashionisthewaytogo #sustainablefashion #sustainability #supportsmallbusiness #smallbusiness #staysafestayhome #thecatthriftsavailable
 &thecatthriftsavailabletop &thecatthriftsavailablebottom &thecatthriftsavailabledress &thecatthriftsavailablejacket
 

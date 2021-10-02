@@ -9,6 +9,7 @@ import datetime
 import pickle
 from infi.systray import SysTrayIcon
 from functools import partial
+import pkg_resources
 
 from messengerhandler import Handler as Handler
 import tooltip
@@ -94,13 +95,20 @@ class Application(tk.Frame):
         """)
         # self.help_label.grid(row=0, column=0)
         self.help_info_text = """
-    Cappribot version 0.1.0 \n
+Cappribot version 0.2.5 \n
         
-    Before using the program, add your Facebook Messenger credentials through Actions > Set Credentials.
-    To send a instant text, go to Actions > New Task.
-    To schedule tasks, go to Actions > Schedule New Task.
-    Be aware that for scheduled tasks to work, the program must either be open, or in a minimized state!  
-    Please refer to GitHub readme.md for more information.
+Before using the program, add your Facebook Messenger credentials through Actions > Set Credentials.
+To send a instant text, go to Actions > New Task.
+To schedule tasks, go to Actions > Schedule New Task.
+
+Iterations refer to the amount of times a text is sent to the recipient. 
+Text formatting:
+using '<>' in the text gives the index of the text, e.g. "No.<>" becomes "No.1"
+adding '&&' splits the text at that point to separate the text messages sent.
+Be aware that for scheduled tasks to work, the program must either be open, or in a minimized state!  
+    
+Please refer to GitHub readme.md for more information.
+created by vxix in 2021.
         """
         self.help_info = tk.Text(self.help_frame, width=55, height=20)
         self.help_info.insert('end', self.help_info_text)
@@ -661,7 +669,7 @@ root.tk.call("set_theme", "dark")
 # style.configure("Togglebutton", foreground='white')
 default_font.configure(size=11)
 # root.geometry("1050x600")
-root.title("Cappribot v0.2.0a")
+root.title("Cappribot v0.2.5a")
 root.iconphoto(False, tk.PhotoImage(file='Source/Resources/Icon/gradient_less_saturated.png'))
 root.resizable(False, False)
 app = Application(master=root)
