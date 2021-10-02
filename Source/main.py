@@ -195,7 +195,6 @@ class Application(tk.Frame):
         self.scheduled_frame = ttk.LabelFrame(text="Schedules", width=300, height=250)
         self.scheduled_frame.grid_propagate(False)
         self.scheduled_frame.grid(row=0, column=1)
-
         self.update_schedule()
         # self.help_label = ttk.Label(self.scheduled_frame, text="Scheduled tasks")
         # self.help_label.grid(row=0, column=0)
@@ -252,7 +251,7 @@ class Application(tk.Frame):
         clear_creds = ttk.Button(settings, text="Clear credentials", command=self.clear_creds)
         clear_creds.grid(row=3, column=0, sticky="ews")
         apply_button = ttk.Button(master=settings, text="Apply",
-                                  command=lambda: [self.apply_settings, settings.destroy()])
+                                  command=lambda: [self.apply_settings(), settings.destroy()])
         apply_button.grid(row=4, column=0, sticky="ews")
 
     def set_credentials(self):
@@ -555,19 +554,34 @@ class Application(tk.Frame):
         popup.add_separator()
 
         apply_button = ttk.Button(master=schedule_window, text="Add schedule",
-                                  command=lambda: [self.update_schedule(),
-                                                   self.scheduler.add_schedule(link=link_entry.get(),
-                                                                               text=input_text.get("1.0", tk.END),
-                                                                               hour=scheduler_hour.get(),
-                                                                               minute=scheduler_minute.get())])
+                                  command=lambda: [
+                                      self.scheduler.add_schedule(link=link_entry.get(),
+                                                                  text=input_text.get("1.0", tk.END),
+                                                                  hour=scheduler_hour.get(),
+                                                                  minute=scheduler_minute.get()),
+                                      self.update_schedule()])
         apply_button.grid(row=2, column=0, sticky="ews")
 
     def update_schedule(self):
-        self.schedules = self.scheduler.load_schedules()
-        for idx, schedule in enumerate(self.schedules):
-            ttk.Label(self.scheduled_frame, text=f'{schedule["hour"]}:{schedule["minute"]} hours').grid(row=idx, column=0)
-            ttk.Button(self.scheduled_frame, text="Remove schedule").grid(row=idx, column=1, padx=25, pady=5, sticky="e")
 
+        def remover(idx):
+            self.scheduler.remove_schedule(idx)
+            self.update_schedule()
+
+        for item in self.scheduled_frame.winfo_children():
+            item.destroy()
+
+        self.schedules = self.scheduler.load_schedules()
+
+        for idx, schedule in enumerate(self.schedules):
+            # ttk.Label(self.scheduled_frame, text=f'{schedule["ref_label"]}').grid(row=idx, column=0)
+            ttk.Label(self.scheduled_frame, text=f'{schedule["hour"]}:{schedule["minute"]} hours').grid(row=idx,
+                                                                                                        column=0)
+            ttk.Button(self.scheduled_frame, text="Remove",
+                       command=partial(remover, idx)) \
+                .grid(row=idx, column=1, padx=25, pady=5, sticky="e")
+
+    # todo start scheduler when main window starts
     def menu_popup(self, event):
         try:
             self.popup.tk_popup(event.x_root, event.y_root, 0)

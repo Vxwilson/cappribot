@@ -12,6 +12,7 @@ class Scheduler:
         self.schedules = self.load_schedules()
         self.root = root
         self.func = func
+        self.recheck_all_schedules()
 
     def add_schedule(self, link, text='', method='Plain text', iteration=1, month=1, day=1, hour=12, minute=0, second=0):
         if self.schedules:
@@ -34,7 +35,8 @@ class Scheduler:
         self.recheck_all_schedules()
 
     def remove_schedule(self, idx):
-        if 0 < idx < len(self.schedules):
+        print(idx)
+        if 0 <= idx < len(self.schedules):
             del self.schedules[idx]
 
         data = {'entry': self.schedules}
@@ -46,16 +48,20 @@ class Scheduler:
         if self.process is not None:
             for process in self.process:
                 self.root.after_cancel(process)
-        for idx, schedule in enumerate(self.schedules):
-            print(schedule)
-            self.try_start_alarm(idx, int(schedule["hour"]), int(schedule["minute"]))
+        if self.schedules is not None:
+            for idx, schedule in enumerate(self.schedules):
+                print(schedule)
+                self.try_start_alarm(idx, int(schedule["hour"]), int(schedule["minute"]))
 
     def try_start_alarm(self, idx, hour, minute):
         # if self.process is not None:
         #     print("clearing previous process")
         #     self.root.after_cancel(self.process)
         # todo possible check if processes are cleared, possible code refactoring required
-        self.process.append(self.root.after(1000, lambda: self.check_alarm(idx, hour, minute)))
+        # self.process.append(self.root.after(1000, lambda: self.check_alarm(idx, hour, minute)))
+        self.root.after(1000, lambda: self.check_alarm(idx, hour, minute))
+        print(self.root.tk.call('after', 'info'))
+
 
     def check_alarm(self, idx, hour, minute):
         actual_time = datetime.datetime.now().strftime("%H:%M")
@@ -66,7 +72,7 @@ class Scheduler:
             self.func(self.schedules[idx]["text"], idx)
             self.remove_schedule(idx)
             return
-        self.root.after(1000, lambda: self.try_start_alarm(idx, hour, minute))
+        self.process.append(self.root.after(1000, lambda: self.check_alarm(idx, hour, minute)))
 
     def load_schedules(self, idx=-1):
         if os.path.exists('Source/Resources/schedules.txt'):
