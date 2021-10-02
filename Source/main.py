@@ -287,7 +287,6 @@ created by vxix in 2021.
         filemenu = tk.Menu(menubar, tearoff=0)
         # filemenu.add_command(label="Undo", command=input_text.undo, accelerator="Ctrl+Z")
         # filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
-        filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
         filemenu.add_command(label="Close", command=instant_task_window.destroy)
         menubar.add_cascade(label="File", menu=filemenu)
 
@@ -340,6 +339,16 @@ created by vxix in 2021.
             "text"])
         input_text.grid(row=1, column=0)
 
+        def read_input():
+            file = tdialog.askopenfile(parent=root, mode='rb', title='')
+            if file is not None:
+                data = file.read()
+                file.close()
+                input_text.delete('1.0', tk.END)
+                # self.input_text.insert("end", data.decode("utf-8"))
+                input_text.insert("end", data)
+        filemenu.add_command(label="Read from file", command=read_input, accelerator="Ctrl+O")
+
         filemenu.add_command(label="Undo", command=input_text.edit_undo, accelerator="Ctrl+Z")
         filemenu.add_command(label="Redo", command=input_text.edit_redo, accelerator="Ctrl+Y")
 
@@ -385,7 +394,6 @@ created by vxix in 2021.
         filemenu = tk.Menu(menubar, tearoff=0)
         # filemenu.add_command(label="Undo", command=input_text.undo, accelerator="Ctrl+Z")
         # filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
-        filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
         filemenu.add_command(label="Close", command=schedule_window.destroy)
         menubar.add_cascade(label="File", menu=filemenu)
 
@@ -438,6 +446,16 @@ created by vxix in 2021.
                           Texts.text.examplequote if not self.data or "text" not in self.data else self.data[
                               "text"])
         input_text.grid(row=1, column=0)
+
+        def read_input():
+            file = tdialog.askopenfile(parent=root, mode='rb', title='')
+            if file is not None:
+                data = file.read()
+                file.close()
+                input_text.delete('1.0', tk.END)
+                # self.input_text.insert("end", data.decode("utf-8"))
+                input_text.insert("end", data)
+        filemenu.add_command(label="Read from file", command=read_input, accelerator="Ctrl+O")
 
         filemenu.add_command(label="Undo", command=input_text.edit_undo, accelerator="Ctrl+Z")
         filemenu.add_command(label="Redo", command=input_text.edit_redo, accelerator="Ctrl+Y")
