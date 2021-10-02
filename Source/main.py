@@ -79,7 +79,7 @@ class Application(tk.Frame):
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-        # menu popup
+        # # menu popup
         # self.popup = tk.Menu(self.input_text, tearoff=0)
         # self.popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
         # self.popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
@@ -157,12 +157,12 @@ created by vxix in 2021.
         settings.title("Settings")
         settings.minsize(550, 350)
 
-        save_cred_box = ttk.Checkbutton(master=settings, text="Save credentials", variable=self.save_cred)
-        save_cred_box.grid(row=0, column=0, sticky="ews")
-        tooltip.CreateToolTip(save_cred_box, text=Texts.text.save_cred_tooltip)
+        # save_cred_box = ttk.Checkbutton(master=settings, text="Save credentials", variable=self.save_cred)
+        # save_cred_box.grid(row=0, column=0, sticky="ews")
+        # tooltip.CreateToolTip(save_cred_box, text=Texts.text.save_cred_tooltip)
 
         headless_box = ttk.Checkbutton(settings, text="Headless browser", variable=self.headless)
-        headless_box.grid(row=1, column=0, sticky="ews")
+        headless_box.grid(row=1, column=0, sticky="ews", pady=10)
         tooltip.CreateToolTip(headless_box,
                               text="When headless is applied, no browser with be shown during the autonomous process.")
 
@@ -182,7 +182,7 @@ created by vxix in 2021.
         clear_creds.grid(row=3, column=0, sticky="ews")
         apply_button = ttk.Button(master=settings, text="Apply",
                                   command=lambda: [self.apply_settings(), settings.destroy()])
-        apply_button.grid(row=4, column=0, sticky="ews")
+        apply_button.grid(row=4, column=0, sticky="ews", pady=10)
 
     def set_credentials(self):
 
@@ -352,6 +352,26 @@ created by vxix in 2021.
         filemenu.add_command(label="Undo", command=input_text.edit_undo, accelerator="Ctrl+Z")
         filemenu.add_command(label="Redo", command=input_text.edit_redo, accelerator="Ctrl+Y")
 
+        # menu popup
+        popup = tk.Menu(input_text, tearoff=0)
+
+        def menu_popup(event):
+            try:
+                popup.tk_popup(event.x_root, event.y_root, 0)
+            finally:
+                popup.grab_release()
+
+        def add_divider():
+            input_text.insert(tk.INSERT, "\n$$\n\n")
+            # print(self.input_text.index(tk.INSERT))
+
+        def clear_input():
+            input_text.delete('1.0', tk.END)
+
+        popup.add_command(label="Add divider", command=add_divider, accelerator="Alt+D")
+        popup.add_command(label="Clear", command=clear_input, accelerator="Ctrl+Q")
+        popup.add_separator()
+
         technical_frame = ttk.LabelFrame(instant_task_window, text="Options")
         technical_frame.grid(row=1, column=1, sticky="new")
         technical_frame.grid_rowconfigure([0, 1], weight=1)
@@ -375,15 +395,12 @@ created by vxix in 2021.
         instant_task_window.grid_rowconfigure(0, weight=1)
         instant_task_window.grid_columnconfigure(0, weight=1)
 
-        # menu popup
-        popup = tk.Menu(input_text, tearoff=0)
-        popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
-        popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
-        popup.add_separator()
-
         apply_button = ttk.Button(master=instant_task_window, text="Send", command=lambda: [
             self.handle_messenger(input_text.get("1.0", tk.END))])
         apply_button.grid(row=2, column=0, sticky="ews")
+
+        input_text.bind("<Button-3>", menu_popup)
+
 
     def new_schedule(self):
         schedule_window = tk.Toplevel(root)
@@ -460,6 +477,26 @@ created by vxix in 2021.
         filemenu.add_command(label="Undo", command=input_text.edit_undo, accelerator="Ctrl+Z")
         filemenu.add_command(label="Redo", command=input_text.edit_redo, accelerator="Ctrl+Y")
 
+        # menu popup
+        popup = tk.Menu(input_text, tearoff=0)
+
+        def menu_popup(event):
+            try:
+                popup.tk_popup(event.x_root, event.y_root, 0)
+            finally:
+                popup.grab_release()
+
+        def add_divider():
+            input_text.insert(tk.INSERT, "\n$$\n\n")
+            # print(self.input_text.index(tk.INSERT))
+
+        def clear_input():
+            input_text.delete('1.0', tk.END)
+
+        popup.add_command(label="Add divider", command=add_divider, accelerator="Alt+D")
+        popup.add_command(label="Clear", command=clear_input, accelerator="Ctrl+Q")
+        popup.add_separator()
+
         technical_frame = ttk.LabelFrame(schedule_window, text="Options")
         technical_frame.grid(row=1, column=1, sticky="new")
         technical_frame.grid_rowconfigure([0, 1], weight=1)
@@ -495,12 +532,6 @@ created by vxix in 2021.
         schedule_window.grid_rowconfigure(0, weight=1)
         schedule_window.grid_columnconfigure(0, weight=1)
 
-        # menu popup
-        popup = tk.Menu(input_text, tearoff=0)
-        popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
-        popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
-        popup.add_separator()
-
         apply_button = ttk.Button(master=schedule_window, text="Add schedule",
                                   command=lambda: [
                                       self.scheduler.add_schedule(link=link_entry.get(),
@@ -509,6 +540,8 @@ created by vxix in 2021.
                                                                   minute=scheduler_minute.get()),
                                       self.update_schedule()])
         apply_button.grid(row=2, column=0, sticky="ews")
+
+        input_text.bind("<Button-3>", menu_popup)
 
     def update_schedule(self):
 
@@ -529,7 +562,7 @@ created by vxix in 2021.
                        command=partial(remover, idx)) \
                 .grid(row=idx, column=1, padx=25, pady=5, sticky="e")
 
-    # todo start scheduler when main window starts
+    # todo add menu_popup to window
     def menu_popup(self, event):
         try:
             self.popup.tk_popup(event.x_root, event.y_root, 0)
@@ -609,10 +642,7 @@ created by vxix in 2021.
                                             self.data["password"],
                                             self.data["link"], self.method.get(), self.iteration_value.get()
                                             , self.settings_data["headless"])
-            # self.handler.handle_message(self.input_text.get("1.0", tk.END), self.email_entry.get(),
-            #                             self.password_entry.get(),
-            #                             self.link_entry.get(), self.method.get(), self.iteration_value.get()
-            #                             , self.headless.get())
+        self.update_schedule()
 
     def load_settings(self):
         if os.path.exists('Source/Resources/settings.txt'):
@@ -659,22 +689,6 @@ created by vxix in 2021.
         with open('Source/Resources/save.txt', 'wb') as file:
             pickle.dump(data, file)
         self.data = self.load_data()
-    # def save_data(self):
-    #     self.save_settings()
-    #     # if self.save_cred.get() is False:
-    #     #     data = {'email': False, 'link': False,
-    #     #             'text': self.input_text.get("1.0", tk.END)
-    #     #             }
-    #     # else:
-    #     #     data = {'email': self.email_entry.get(), 'link': self.link_entry.get(),
-    #     #             'text': self.input_text.get("1.0", tk.END)
-    #     #             }
-    #     data = {'email': self.email_entry.get(), 'link': self.link_entry.get(),
-    #             'text': self.input_text.get("1.0", tk.END)
-    #             }
-    #     with open('Source/Resources/save.txt', 'wb') as file:
-    #         pickle.dump(data, file)
-
 
 root = tk.Tk()
 # ttk.Style().configure("TButton", padding=6, relief="flat", foreground="#E8E8E8", background="#292929")
@@ -683,8 +697,6 @@ default_font = tk.font.nametofont("TkDefaultFont")
 # default_font.configure(family="Garamond", size=13)
 root.tk.call('source', 'Source/Resources/Style/azure.tcl')
 root.tk.call("set_theme", "dark")
-# style.configure("Accentbutton", foreground='white')
-# style.configure("Togglebutton", foreground='white')
 default_font.configure(size=11)
 # root.geometry("1050x600")
 root.title("Cappribot v0.2.5a")
