@@ -28,7 +28,7 @@ class Application(tk.Frame):
         self.settings_data = self.load_settings()
         self.link_data = self.load_link()
         self.handler = Handler()
-        self.scheduler = scheduler.Scheduler()
+        self.scheduler = scheduler.Scheduler(root, self.handle_messenger)
         self.master = master
         # self.pack()
 
@@ -337,7 +337,7 @@ class Application(tk.Frame):
             with open('Source/Resources/link.txt', 'wb') as file:
                 pickle.dump(data, file)
 
-            self.data = self.load_data()
+            self.link_data = self.load_link()
 
     def new_instant_task(self):
 
@@ -350,14 +350,14 @@ class Application(tk.Frame):
         # filemenu.add_command(label="Undo", command=input_text.undo, accelerator="Ctrl+Z")
         # filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
         filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
-        # filemenu.add_command(label="Exit", command=instant_task_window.destroy())
+        filemenu.add_command(label="Close", command=instant_task_window.destroy)
         menubar.add_cascade(label="File", menu=filemenu)
 
         actionmenu = tk.Menu(menubar, tearoff=0)
         actionmenu.add_command(label="Send", underline=0,
                                command=lambda: self.handle_messenger(input_text.get("1.0", tk.END)),
                                accelerator="Ctrl+Enter")
-
+        actionmenu.add_command(label="Add Link", command=self.add_link, accelerator="Control+L")
         menubar.add_cascade(label="Actions", menu=actionmenu)
 
         instant_task_window.config(menu=menubar)
@@ -386,7 +386,7 @@ class Application(tk.Frame):
             nested_menu = tk.Menu(actionmenu)
             for index, link in enumerate(entry):
                 nested_menu.add_command(label=link["entry_name"], command=partial(fetch_link, index))
-            nested_menu.add_command(label="See all")
+            # nested_menu.add_command(label="See all", command=list_links) todo add see all link function
             actionmenu.add_cascade(label="Auto insert links", menu=nested_menu)
 
         input_frame = ttk.LabelFrame(instant_task_window, text="Text")
@@ -443,21 +443,22 @@ class Application(tk.Frame):
         schedule_window.title("New schedule task")
         schedule_window.minsize(550, 350)
 
-        self.menubar = tk.Menu(schedule_window)
-        self.filemenu = tk.Menu(self.menubar, tearoff=0)
-        # self.filemenu.add_command(label="Undo", command=self.input_text.undo, accelerator="Ctrl+Z")
-        # self.filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
-        self.filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
-        # self.filemenu.add_command(label="Exit", command=schedule_window.destroy())
-        self.menubar.add_cascade(label="File", menu=self.filemenu)
+        menubar = tk.Menu(schedule_window)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        # filemenu.add_command(label="Undo", command=input_text.undo, accelerator="Ctrl+Z")
+        # filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
+        filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
+        filemenu.add_command(label="Close", command=schedule_window.destroy)
+        menubar.add_cascade(label="File", menu=filemenu)
 
-        self.actionmenu = tk.Menu(self.menubar, tearoff=0)
-        # self.actionmenu.add_command(label="Send", underline=0, command=self.handle_messenger, accelerator="Ctrl+Enter")
-        self.actionmenu.add_command(label="Get saved links")  # todo add recipient links to a save file
+        actionmenu = tk.Menu(menubar, tearoff=0)
+        actionmenu.add_command(label="Send", underline=0,
+                               command=lambda: self.handle_messenger(input_text.get("1.0", tk.END)),
+                               accelerator="Ctrl+Enter")
+        actionmenu.add_command(label="Add Link", command=self.add_link, accelerator="Control+L")
+        menubar.add_cascade(label="Actions", menu=actionmenu)
 
-        self.menubar.add_cascade(label="Actions", menu=self.actionmenu)
-
-        schedule_window.config(menu=self.menubar)
+        schedule_window.config(menu=menubar)
 
         login_frame = ttk.LabelFrame(schedule_window, text="Recipient Details")
         login_frame.grid(row=0, column=1, sticky="new")
@@ -474,65 +475,81 @@ class Application(tk.Frame):
             link_entry.delete(0, tk.END)
             link_entry.insert("end", self.data["link"])
 
-        self.input_frame = ttk.LabelFrame(schedule_window, text="Text")
-        self.input_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
-        self.input_frame.grid_rowconfigure([0], weight=1)
-        self.input_frame.grid_columnconfigure([0], weight=1)
+        def fetch_link(idx):
+            link_entry.delete(0, tk.END)
+            link_entry.insert("end", self.link_data["entry"][idx]["entry_link"])
 
-        self.input_label = ttk.Label(self.input_frame, text="Input")
-        self.input_label.grid(row=0, column=0)
-        tooltip.CreateToolTip(self.input_label, text=Texts.text.input_tooltip)
-        self.input_text = tk.Text(self.input_frame, undo=True)
-        self.input_text.insert("end",
+        if "entry" in self.link_data:
+            entry = self.link_data["entry"]
+            nested_menu = tk.Menu(actionmenu)
+            for index, link in enumerate(entry):
+                nested_menu.add_command(label=link["entry_name"], command=partial(fetch_link, index))
+            # nested_menu.add_command(label="See all", command=list_links) todo add see all link function
+            actionmenu.add_cascade(label="Auto insert links", menu=nested_menu)
+
+        input_frame = ttk.LabelFrame(schedule_window, text="Text")
+        input_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
+        input_frame.grid_rowconfigure([0], weight=1)
+        input_frame.grid_columnconfigure([0], weight=1)
+
+        input_label = ttk.Label(input_frame, text="Input")
+        input_label.grid(row=0, column=0)
+        tooltip.CreateToolTip(input_label, text=Texts.text.input_tooltip)
+        input_text = tk.Text(input_frame, undo=True)
+        input_text.insert("end",
                                Texts.text.examplequote if not self.data or "text" not in self.data else self.data[
                                    "text"])
-        self.input_text.grid(row=1, column=0)
+        input_text.grid(row=1, column=0)
 
-        self.filemenu.add_command(label="Undo", command=self.input_text.edit_undo, accelerator="Ctrl+Z")
-        self.filemenu.add_command(label="Redo", command=self.input_text.edit_redo, accelerator="Ctrl+Y")
+        filemenu.add_command(label="Undo", command=input_text.edit_undo, accelerator="Ctrl+Z")
+        filemenu.add_command(label="Redo", command=input_text.edit_redo, accelerator="Ctrl+Y")
 
-        self.technical_frame = ttk.LabelFrame(schedule_window, text="Options")
-        self.technical_frame.grid(row=1, column=1, sticky="new")
-        self.technical_frame.grid_rowconfigure([0, 1], weight=1)
-        self.technical_frame.grid_columnconfigure([0, 1], weight=1)
+        technical_frame = ttk.LabelFrame(schedule_window, text="Options")
+        technical_frame.grid(row=1, column=1, sticky="new")
+        technical_frame.grid_rowconfigure([0, 1], weight=1)
+        technical_frame.grid_columnconfigure([0, 1], weight=1)
 
-        self.method_label = ttk.Label(master=self.technical_frame, text="Send option:")
-        self.method_label.grid(row=0, column=0, sticky="w")
-        self.send_method = ttk.Combobox(master=self.technical_frame, width=10, state="readonly",
+        method_label = ttk.Label(master=technical_frame, text="Send option:")
+        method_label.grid(row=0, column=0, sticky="w")
+        send_method = ttk.Combobox(master=technical_frame, width=10, state="readonly",
                                         textvariable=self.method)
-        self.send_method['values'] = ('Plain text', 'Caption')
-        self.send_method.current(0 if not self.settings_data or "method" not in self.settings_data
+        send_method['values'] = ('Plain text', 'Caption')
+        send_method.current(0 if not self.settings_data or "method" not in self.settings_data
                                  else self.settings_data["method"])
-        self.send_method.grid(row=0, column=1, sticky="w")
+        send_method.grid(row=0, column=1, sticky="w")
 
-        self.iteration_label = ttk.Label(master=self.technical_frame, text="Iteration:")
-        self.iteration_label.grid(row=1, column=0, sticky="w", pady=15)
-        self.iteration_box = ttk.Spinbox(master=self.technical_frame, width=4, from_=1, to=100, wrap=True,
+        iteration_label = ttk.Label(master=technical_frame, text="Iteration:")
+        iteration_label.grid(row=1, column=0, sticky="w", pady=15)
+        iteration_box = ttk.Spinbox(master=technical_frame, width=4, from_=1, to=100, wrap=True,
                                          textvariable=self.iteration_value)
-        self.iteration_box.grid(row=1, column=1, sticky="w")
+        iteration_box.grid(row=1, column=1, sticky="w")
 
-        self.scheduler_label = ttk.Label(master=self.technical_frame, text="Schedule:")
-        self.scheduler_label.grid(row=2, column=0, sticky="w")
+        scheduler_label = ttk.Label(master=technical_frame, text="Schedule:")
+        scheduler_label.grid(row=2, column=0, sticky="w")
         # todo check possible bug that occur when 00 is passed instead of 0
-        self.scheduler_hour = ttk.Spinbox(master=self.technical_frame, width=5, from_=0, to=23, increment=1,
+        scheduler_hour = ttk.Spinbox(master=technical_frame, width=5, from_=0, to=23, increment=1,
                                           textvariable=self.hour, wrap=True)
-        self.scheduler_hour.grid(row=2, column=1, sticky="w", padx=0)
-        self.scheduler_minute = ttk.Spinbox(master=self.technical_frame, width=5, from_=0, to=59, increment=15,
+        scheduler_hour.grid(row=2, column=1, sticky="w", padx=0)
+        scheduler_minute = ttk.Spinbox(master=technical_frame, width=5, from_=0, to=59, increment=15,
                                             textvariable=self.min, wrap=True)
-        self.scheduler_minute.grid(row=2, column=1, sticky="w", padx=55)
-        self.scheduler_hourlabel = ttk.Label(self.technical_frame, text="Hours")
-        self.scheduler_hourlabel.grid(row=2, column=1, sticky="w", padx=110)
+        scheduler_minute.grid(row=2, column=1, sticky="w", padx=55)
+        scheduler_hourlabel = ttk.Label(technical_frame, text="Hours")
+        scheduler_hourlabel.grid(row=2, column=1, sticky="w", padx=110)
 
         schedule_window.grid_rowconfigure(0, weight=1)
         schedule_window.grid_columnconfigure(0, weight=1)
 
         # menu popup
-        self.popup = tk.Menu(self.input_text, tearoff=0)
-        self.popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
-        self.popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
-        self.popup.add_separator()
+        popup = tk.Menu(input_text, tearoff=0)
+        popup.add_command(label="Add divider", command=self.add_divider, accelerator="Alt+D")
+        popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
+        popup.add_separator()
 
-        apply_button = ttk.Button(master=schedule_window, text="Add schedule", command=self.scheduler.add_schedule)
+        apply_button = ttk.Button(master=schedule_window, text="Add schedule",
+                                  command=lambda: self.scheduler.add_schedule(link=link_entry.get(),
+                                                                              text=input_text.get("1.0", tk.END),
+                                                                              hour=scheduler_hour.get(),
+                                                                              minute=scheduler_minute.get()))
         apply_button.grid(row=2, column=0, sticky="ews")
 
     def menu_popup(self, event):
@@ -595,20 +612,29 @@ class Application(tk.Frame):
     def show_window(self):
         root.deiconify()
 
-    def handle_messenger(self, text):
+    def handle_messenger(self, text="", idx=-1):
         # self.save_data()
-        # scheduler.alarm(root, print('hi'), self.hour.get(), self.min.get())
-        if "email" not in self.data:  # todo prompt user to set credentials
-            pass
+        if idx != -1:
+            if "email" not in self.data:  # todo prompt user to set credentials
+                pass
+            else:
+                schedule = self.scheduler.load_schedules(idx)
+                self.handler.handle_message(text, self.data["email"],
+                                            self.data["password"],
+                                            schedule["link"], schedule["method"], int(schedule["iteration"])
+                                            , self.settings_data["headless"])
         else:
-            self.handler.handle_message(text, self.data["email"],
-                                        self.data["password"],
-                                        self.data["link"], self.method.get(), self.iteration_value.get()
-                                        , self.settings_data["headless"])
-        # self.handler.handle_message(self.input_text.get("1.0", tk.END), self.email_entry.get(),
-        #                             self.password_entry.get(),
-        #                             self.link_entry.get(), self.method.get(), self.iteration_value.get()
-        #                             , self.headless.get())
+            if "email" not in self.data:  # todo prompt user to set credentials
+                pass
+            else:
+                self.handler.handle_message(text, self.data["email"],
+                                            self.data["password"],
+                                            self.data["link"], self.method.get(), self.iteration_value.get()
+                                            , self.settings_data["headless"])
+            # self.handler.handle_message(self.input_text.get("1.0", tk.END), self.email_entry.get(),
+            #                             self.password_entry.get(),
+            #                             self.link_entry.get(), self.method.get(), self.iteration_value.get()
+            #                             , self.headless.get())
 
     def load_settings(self):
         if os.path.exists('Source/Resources/settings.txt'):
