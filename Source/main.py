@@ -4,6 +4,7 @@ import tkinter as tk
 import tkinter.filedialog as tdialog
 import tkinter.ttk as ttk
 import tkinter.font
+import tkinter.messagebox
 import datetime
 from PIL import Image, ImageTk
 import time
@@ -35,6 +36,9 @@ class Application(tk.Frame):
         self.headless = tk.BooleanVar()
         self.headless.set(True if not self.settings_data or "headless" not in self.settings_data else
                           self.settings_data["headless"])
+        self.minimize_radio = tk.IntVar()
+        self.minimize_radio.set(1 if not self.settings_data or "minimize_radio" not in self.settings_data else
+                                self.settings_data["minimize_radio"])
 
         self.method = tk.StringVar()
 
@@ -68,7 +72,8 @@ class Application(tk.Frame):
         #                                                                            self.hour.get(), self.min.get()),
         #                             accelerator="Ctrl+Enter")
         self.actionmenu.add_command(label="New task", command=lambda: self.new_instant_task(), accelerator="Control+N")
-        self.actionmenu.add_command(label="Schedule new task", command=lambda: self.new_schedule(), accelerator="Control+Shift+N")
+        self.actionmenu.add_command(label="Schedule new task", command=lambda: self.new_schedule(),
+                                    accelerator="Control+Shift+N")
         self.actionmenu.add_command(label="Autofill credentials", command=self.autofill_creds, accelerator="Alt+V")
 
         if not self.data or (self.settings_data and self.settings_data["save_cred"]) is False:
@@ -189,12 +194,14 @@ class Application(tk.Frame):
         self.bind_keys()
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # to fix blurry text
 
+        root.protocol('WM_DELETE_WINDOW', self.override_close)
+
     def bind_keys(self):
         # self.input_text.bind("<Button-3>", self.menu_popup)
 
         # shortcuts
         root.bind('<Control-Return>', lambda e: self.scheduler.try_start_alarm(root, self.handle_messenger,
-                                                                               self.hour.get(), self.min.get()),)
+                                                                               self.hour.get(), self.min.get()), )
         root.bind('<Control-o>', lambda e: self.read_input())
         root.bind('<Control-s>', lambda e: self.save_data())
         root.bind('<Control-n>', lambda e: self.new_instant_task())
@@ -209,7 +216,7 @@ class Application(tk.Frame):
     def open_settings_(self):
         settings = tk.Toplevel(root)
         settings.title("Settings")
-        settings.geometry("550x400")
+        settings.minsize(550, 350)
 
         save_cred_box = ttk.Checkbutton(master=settings, text="Save credentials", variable=self.save_cred)
         save_cred_box.grid(row=0, column=0, sticky="ews")
@@ -217,10 +224,23 @@ class Application(tk.Frame):
 
         headless_box = ttk.Checkbutton(settings, text="Headless browser", variable=self.headless)
         headless_box.grid(row=1, column=0, sticky="ews")
-        tooltip.CreateToolTip(headless_box, text="When headless is applied, no browser with be shown during the autonomous process.")
+        tooltip.CreateToolTip(headless_box,
+                              text="When headless is applied, no browser with be shown during the autonomous process.")
+
+        minimize_option_label = ttk.Label(settings, text="Close program prompt")
+        minimize_option_label.grid(row=2, column=0, sticky="ewn", pady=20)
+        minimize_option_radio = ttk.Radiobutton(settings, text="Always ask", variable=self.minimize_radio,
+                                                value=1)
+        minimize_option_radio2 = ttk.Radiobutton(settings, text="Minimize", variable=self.minimize_radio,
+                                                 value=2)
+        minimize_option_radio3 = ttk.Radiobutton(settings, text="Close", variable=self.minimize_radio,
+                                                 value=3)
+        minimize_option_radio.grid(row=2, column=0, sticky="ewn", pady=40)
+        minimize_option_radio2.grid(row=2, column=0, sticky="ewn", pady=70)
+        minimize_option_radio3.grid(row=2, column=0, sticky="ewn", pady=100)
 
         apply_button = ttk.Button(master=settings, text="Apply", command=self.apply_settings)
-        apply_button.grid(row=2, column=0, sticky="ews")
+        apply_button.grid(row=4, column=0, sticky="ews")
 
     def new_instant_task(self):
         instant_task_window = tk.Toplevel(root)
@@ -241,7 +261,7 @@ class Application(tk.Frame):
                                     command=lambda: self.scheduler.try_start_alarm(root, self.handle_messenger,
                                                                                    self.hour.get(), self.min.get()),
                                     accelerator="Ctrl+Enter")
-        self.actionmenu.add_command(label="Get saved links") # todo add recipient links to a save file
+        self.actionmenu.add_command(label="Get saved links")  # todo add recipient links to a save file
 
         self.menubar.add_cascade(label="Actions", menu=self.actionmenu)
 
@@ -395,7 +415,6 @@ class Application(tk.Frame):
         self.popup.add_command(label="Clear", command=self.clear_input, accelerator="Ctrl+Q")
         self.popup.add_separator()
 
-
         apply_button = ttk.Button(master=schedule_window, text="Add schedule", command=self.scheduler.add_schedule)
         apply_button.grid(row=2, column=0, sticky="ews")
 
@@ -431,6 +450,25 @@ class Application(tk.Frame):
         else:
             print("no previous credentials entered.")
 
+    # shows exit prompt when users press 'X' button
+    def override_close(self):
+        if self.minimize_radio.get() == 2:
+            self.hide_window()
+        elif self.minimize_radio.get() == 3:
+            root.destroy()
+        else:
+            res = tk.messagebox.askyesnocancel('Close Window', 'Minimize window '
+                                                               'instead of closing? This is essential for '
+                                                               'scheduled tasks to happen. (Changable in Setings)')
+            if res:
+                self.hide_window()
+                pass
+            elif res is False:
+                root.destroy()
+                pass
+            elif res is None:
+                pass
+
     def hide_window(self):
         def clicked(icon=None):
             self.show_window()
@@ -439,9 +477,11 @@ class Application(tk.Frame):
             except:
                 print()
                 pass
+
         root.withdraw()
         menu_options = (("Show window", None, clicked),)
-        systray = SysTrayIcon("Source/Resources/Icon/picturexviewer.ico", "Cappribot", menu_options, default_menu_index=0)
+        systray = SysTrayIcon("Source/Resources/Icon/picturexviewer.ico", "Cappribot", menu_options,
+                              default_menu_index=0)
         systray.start()
 
     def show_window(self):
@@ -474,9 +514,10 @@ class Application(tk.Frame):
 
     def save_settings(self):
         data = {'save_cred': self.save_cred.get(),
-                'headless' : self.headless.get(),
-                'iteration': self.iteration_value.get(),
-                'method': self.send_method.current()}
+                'headless': self.headless.get(),
+                'minimize_radio': self.minimize_radio.get(),
+                'iteration': self.iteration_value.get()}
+                # 'method': self.send_method.current()}
         with open('Source/Resources/settings.txt', 'wb') as file:
             pickle.dump(data, file)
 
