@@ -63,7 +63,7 @@ class Scheduler:
         print(f"current time: {exact_time} still waiting for {hour:02d}:{minute:02d}")
         if actual_time == f"{hour:02d}:{minute:02d}":
             print(f"scheduled time arrived, starting process")
-            self.func(self.schedules[idx]["text"], idx) #  todo remove from save file after scheduled task executes
+            self.func(self.schedules[idx]["text"], idx)
             self.remove_schedule(idx)
             return
         self.root.after(1000, lambda: self.try_start_alarm(idx, hour, minute))

@@ -29,6 +29,7 @@ class Application(tk.Frame):
         self.link_data = self.load_link()
         self.handler = Handler()
         self.scheduler = scheduler.Scheduler(root, self.handle_messenger)
+        self.schedules = self.scheduler.load_schedules()
         self.master = master
         # self.pack()
 
@@ -174,7 +175,7 @@ class Application(tk.Frame):
         # self.popup.add_separator()
 
         # help frame
-        self.help_frame = ttk.LabelFrame(text="Help", width=500, height=300)
+        self.help_frame = ttk.LabelFrame(text="Help", width=400, height=200)
         self.help_frame.grid_propagate(False)
         # self.login_frame.grid_rowconfigure([0, 1], weight=1)
         # self.login_frame.grid_columnconfigure(0, weight=1)
@@ -187,9 +188,17 @@ class Application(tk.Frame):
         self.close_frame_button = ttk.Button(master=self.help_frame, text="Close",
                                              command=lambda: tkinterextension.lower_frame(self.help_frame))
         # self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame), style="Accentbutton")
-        self.close_frame_button.grid(row=1, column=1)
+        self.close_frame_button.grid(row=1, column=0)
 
         self.help_frame.lower()
+
+        self.scheduled_frame = ttk.LabelFrame(text="Schedules", width=300, height=250)
+        self.scheduled_frame.grid_propagate(False)
+        self.scheduled_frame.grid(row=0, column=1)
+
+        self.update_schedule()
+        # self.help_label = ttk.Label(self.scheduled_frame, text="Scheduled tasks")
+        # self.help_label.grid(row=0, column=0)
 
         self.bind_keys()
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # to fix blurry text
@@ -296,7 +305,6 @@ class Application(tk.Frame):
             link_entry.delete(0, tk.END)
             link_entry.insert("end", self.data["link"])
 
-
     def add_link(self):
         add_link_window = tk.Toplevel(root)
         add_link_window.title("Add link")
@@ -331,7 +339,8 @@ class Application(tk.Frame):
                     entry = loaded_data["entry"]
                     entry.append({'entry_link': link_entry.get(), 'entry_name': name_entry.get()})
                     data = {'entry': entry}
-                else: data = data = {'entry': [{'entry_link': link_entry.get(), 'entry_name': name_entry.get()}]}
+                else:
+                    data = data = {'entry': [{'entry_link': link_entry.get(), 'entry_name': name_entry.get()}]}
             else:
                 data = {'entry': [{'entry_link': link_entry.get(), 'entry_name': name_entry.get()}]}
             with open('Source/Resources/link.txt', 'wb') as file:
@@ -497,8 +506,8 @@ class Application(tk.Frame):
         tooltip.CreateToolTip(input_label, text=Texts.text.input_tooltip)
         input_text = tk.Text(input_frame, undo=True)
         input_text.insert("end",
-                               Texts.text.examplequote if not self.data or "text" not in self.data else self.data[
-                                   "text"])
+                          Texts.text.examplequote if not self.data or "text" not in self.data else self.data[
+                              "text"])
         input_text.grid(row=1, column=0)
 
         filemenu.add_command(label="Undo", command=input_text.edit_undo, accelerator="Ctrl+Z")
@@ -512,26 +521,26 @@ class Application(tk.Frame):
         method_label = ttk.Label(master=technical_frame, text="Send option:")
         method_label.grid(row=0, column=0, sticky="w")
         send_method = ttk.Combobox(master=technical_frame, width=10, state="readonly",
-                                        textvariable=self.method)
+                                   textvariable=self.method)
         send_method['values'] = ('Plain text', 'Caption')
         send_method.current(0 if not self.settings_data or "method" not in self.settings_data
-                                 else self.settings_data["method"])
+                            else self.settings_data["method"])
         send_method.grid(row=0, column=1, sticky="w")
 
         iteration_label = ttk.Label(master=technical_frame, text="Iteration:")
         iteration_label.grid(row=1, column=0, sticky="w", pady=15)
         iteration_box = ttk.Spinbox(master=technical_frame, width=4, from_=1, to=100, wrap=True,
-                                         textvariable=self.iteration_value)
+                                    textvariable=self.iteration_value)
         iteration_box.grid(row=1, column=1, sticky="w")
 
         scheduler_label = ttk.Label(master=technical_frame, text="Schedule:")
         scheduler_label.grid(row=2, column=0, sticky="w")
         # todo check possible bug that occur when 00 is passed instead of 0
         scheduler_hour = ttk.Spinbox(master=technical_frame, width=5, from_=0, to=23, increment=1,
-                                          textvariable=self.hour, wrap=True)
+                                     textvariable=self.hour, wrap=True)
         scheduler_hour.grid(row=2, column=1, sticky="w", padx=0)
         scheduler_minute = ttk.Spinbox(master=technical_frame, width=5, from_=0, to=59, increment=15,
-                                            textvariable=self.min, wrap=True)
+                                       textvariable=self.min, wrap=True)
         scheduler_minute.grid(row=2, column=1, sticky="w", padx=55)
         scheduler_hourlabel = ttk.Label(technical_frame, text="Hours")
         scheduler_hourlabel.grid(row=2, column=1, sticky="w", padx=110)
@@ -546,11 +555,18 @@ class Application(tk.Frame):
         popup.add_separator()
 
         apply_button = ttk.Button(master=schedule_window, text="Add schedule",
-                                  command=lambda: self.scheduler.add_schedule(link=link_entry.get(),
-                                                                              text=input_text.get("1.0", tk.END),
-                                                                              hour=scheduler_hour.get(),
-                                                                              minute=scheduler_minute.get()))
+                                  command=lambda: [self.update_schedule(),
+                                                   self.scheduler.add_schedule(link=link_entry.get(),
+                                                                               text=input_text.get("1.0", tk.END),
+                                                                               hour=scheduler_hour.get(),
+                                                                               minute=scheduler_minute.get())])
         apply_button.grid(row=2, column=0, sticky="ews")
+
+    def update_schedule(self):
+        self.schedules = self.scheduler.load_schedules()
+        for idx, schedule in enumerate(self.schedules):
+            ttk.Label(self.scheduled_frame, text=f'{schedule["hour"]}:{schedule["minute"]} hours').grid(row=idx, column=0)
+            ttk.Button(self.scheduled_frame, text="Remove schedule").grid(row=idx, column=1, padx=25, pady=5, sticky="e")
 
     def menu_popup(self, event):
         try:
