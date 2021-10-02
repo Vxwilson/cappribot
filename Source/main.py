@@ -6,10 +6,7 @@ import tkinter.ttk as ttk
 import tkinter.font
 import tkinter.messagebox
 import datetime
-from PIL import Image, ImageTk
-import time
 import pickle
-import pystray
 from infi.systray import SysTrayIcon
 from functools import partial
 
@@ -57,9 +54,6 @@ class Application(tk.Frame):
 
         self.menubar = tk.Menu(root)
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
-        # self.filemenu.add_command(label="Undo", command=self.input_text.undo, accelerator="Ctrl+Z")
-        # self.filemenu.add_command(label="Redo", accelerator="Ctrl+Y")
-        # self.filemenu.add_command(label="Read from file", command=self.read_input, accelerator="Ctrl+O")
         self.filemenu.add_command(label="Minimize", command=self.hide_window, accelerator="Ctrl+H")
         # self.filemenu.add_command(label="Save credentials", command=self.save_data, accelerator="Ctrl+S")
         self.filemenu.add_separator()
@@ -69,11 +63,6 @@ class Application(tk.Frame):
         self.menubar.add_cascade(label="File", menu=self.filemenu)
 
         self.actionmenu = tk.Menu(self.menubar, tearoff=0)
-        # self.actionmenu.add_command(label="Send", underline=0, command=self.handle_messenger, accelerator="Ctrl+Enter")
-        # self.actionmenu.add_command(label="Send", underline=0,
-        #                             command=lambda: self.scheduler.try_start_alarm(root, self.handle_messenger,
-        #                                                                            self.hour.get(), self.min.get()),
-        #                             accelerator="Ctrl+Enter")
         self.actionmenu.add_command(label="New task", command=lambda: self.new_instant_task(), accelerator="Control+N")
         self.actionmenu.add_command(label="Schedule new task", command=lambda: self.new_schedule(),
                                     accelerator="Control+Shift+N")
@@ -86,85 +75,6 @@ class Application(tk.Frame):
         self.menubar.add_cascade(label="Help", menu=self.helpmenu)
         root.config(menu=self.menubar)
 
-        # self.login_frame = ttk.LabelFrame(text="Login")
-        # self.login_frame.grid(row=0, column=1, sticky="new")
-        # self.login_frame.grid_rowconfigure([0, 1, 2], weight=1, minsize=50)
-        # self.login_frame.grid_columnconfigure([0, 1], weight=1, minsize=130)
-        #
-        # self.email_label = ttk.Label(self.login_frame, text="Facebook email:")
-        # self.email_label.grid(row=0, column=0, sticky="w")
-        # self.email_entry = tkinterextension.LabelEntry(self.login_frame, label="test@email.com")
-        # self.email_entry.grid(row=0, column=1)
-        #
-        # self.password_label = ttk.Label(self.login_frame, text="Password:")
-        # self.password_label.grid(row=1, column=0, sticky="w")
-        # self.password_entry = ttk.Entry(self.login_frame, show="*")
-        # self.password_entry.grid(row=1, column=1)
-        #
-        # self.link_label = ttk.Label(self.login_frame, text="Link:")
-        # self.link_label.grid(row=2, column=0, sticky="w")
-        # tooltip.CreateToolTip(self.link_label, text=Texts.text.link_tooltip)
-        # self.link_entry = tkinterextension.LabelEntry(self.login_frame, label="100000178957952")
-        # self.link_entry.grid(row=2, column=1)
-
-        # self.input_frame = ttk.LabelFrame(text="Text")
-        # self.input_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
-        # self.input_frame.grid_rowconfigure([0], weight=1)
-        # self.input_frame.grid_columnconfigure([0], weight=1)
-        #
-        # self.input_label = ttk.Label(self.input_frame, text="Input")
-        # self.input_label.grid(row=0, column=0)
-        # tooltip.CreateToolTip(self.input_label, text=Texts.text.input_tooltip)
-        # self.input_text = tk.Text(self.input_frame, undo=True)
-        # self.input_text.insert("end", Texts.text.examplequote if not self.data or not self.data["email"] else self.data[
-        #     "text"])
-        # self.input_text.grid(row=1, column=0)
-        #
-        # self.filemenu.add_command(label="Undo", command=self.input_text.edit_undo, accelerator="Ctrl+Z")
-        # self.filemenu.add_command(label="Redo", command=self.input_text.edit_redo, accelerator="Ctrl+Y")
-        #
-        # self.minimize = ttk.Button(self.input_frame, text="Minimize", command=self.hide_window)
-        # self.minimize.grid(row=2, column=0, sticky="e", padx=100)
-        # self.send_fb = ttk.Button(master=self.input_frame, text="Send now",
-        #                           command=lambda: self.scheduler.try_start_alarm(root, self.handle_messenger,
-        #                                                                          self.hour.get(), self.min.get()))
-        # self.send_fb.grid(row=2, column=0, sticky="e")
-        #
-        # self.technical_frame = ttk.LabelFrame(text="Options")
-        # self.technical_frame.grid(row=1, column=1, sticky="new")
-        # self.technical_frame.grid_rowconfigure([0, 1], weight=1)
-        # self.technical_frame.grid_columnconfigure([0, 1], weight=1)
-        #
-        # self.method_label = ttk.Label(master=self.technical_frame, text="Send option:")
-        # self.method_label.grid(row=0, column=0, sticky="w")
-        # self.send_method = ttk.Combobox(master=self.technical_frame, width=10, state="readonly",
-        #                                 textvariable=self.method)
-        # self.send_method['values'] = ('Plain text', 'Caption')
-        # self.send_method.current(0 if not self.settings_data or "method" not in self.settings_data
-        #                          else self.settings_data["method"])
-        # self.send_method.grid(row=0, column=1, sticky="w")
-        #
-        # self.iteration_label = ttk.Label(master=self.technical_frame, text="Iteration:")
-        # self.iteration_label.grid(row=1, column=0, sticky="w", pady=15)
-        # self.iteration_box = ttk.Spinbox(master=self.technical_frame, width=4, from_=1, to=100, wrap=True,
-        #                                  textvariable=self.iteration_value)
-        # self.iteration_box.grid(row=1, column=1, sticky="w")
-        #
-        # self.scheduler_label = ttk.Label(master=self.technical_frame, text="Schedule:")
-        # self.scheduler_label.grid(row=2, column=0, sticky="w")
-        # # todo check possible bug that occur when 00 is passed instead of 0
-        # self.scheduler_hour = ttk.Spinbox(master=self.technical_frame, width=5, from_=0, to=23, increment=1,
-        #                                   textvariable=self.hour, wrap=True)
-        # self.scheduler_hour.grid(row=2, column=1, sticky="w", padx=0)
-        # self.scheduler_minute = ttk.Spinbox(master=self.technical_frame, width=5, from_=0, to=59, increment=15,
-        #                                     textvariable=self.min, wrap=True)
-        # self.scheduler_minute.grid(row=2, column=1, sticky="w", padx=55)
-        # self.scheduler_hourlabel = ttk.Label(self.technical_frame, text="Hours")
-        # self.scheduler_hourlabel.grid(row=2, column=1, sticky="w", padx=110)
-
-        # self.cal = tkcalendar.DateEntry(self.technical_frame, width=10)
-        # self.cal.grid(row=2, column=1, sticky="w")
-
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
@@ -175,22 +85,34 @@ class Application(tk.Frame):
         # self.popup.add_separator()
 
         # help frame
-        self.help_frame = ttk.LabelFrame(text="Help", width=400, height=200)
-        self.help_frame.grid_propagate(False)
-        # self.login_frame.grid_rowconfigure([0, 1], weight=1)
-        # self.login_frame.grid_columnconfigure(0, weight=1)
+        self.help_frame = ttk.LabelFrame(text="Help", width=400)
+        # self.help_frame.grid_propagate(False)
         self.help_frame.grid(row=0, column=0)
         self.help_label = ttk.Label(self.help_frame, text="""
         Cappribot version 0.1.0
         refer to GitHub readme.md for more information
         """)
-        self.help_label.grid(row=0, column=0)
-        self.close_frame_button = ttk.Button(master=self.help_frame, text="Close",
-                                             command=lambda: tkinterextension.lower_frame(self.help_frame))
-        # self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame), style="Accentbutton")
-        self.close_frame_button.grid(row=1, column=0)
+        # self.help_label.grid(row=0, column=0)
+        self.help_info_text = """
+    Cappribot version 0.1.0 \n
+        
+    Before using the program, add your Facebook Messenger credentials through Actions > Set Credentials.
+    To send a instant text, go to Actions > New Task.
+    To schedule tasks, go to Actions > Schedule New Task.
+    Be aware that for scheduled tasks to work, the program must either be open, or in a minimized state!  
+    Please refer to GitHub readme.md for more information.
+        """
+        self.help_info = tk.Text(self.help_frame, width=55, height=20)
+        self.help_info.insert('end', self.help_info_text)
+        self.help_info.configure(state='disabled')
+        self.help_info.grid(row=0, column=0, sticky="ew")
 
-        self.help_frame.lower()
+        # self.close_frame_button = ttk.Button(master=self.help_frame, text="Close",
+        #                                      command=lambda: tkinterextension.lower_frame(self.help_frame))
+        # # self.close_frame_button = ttk.Button(master=self.help_frame, text="Close", command=lambda: tkinterextension.lower_frame(self.help_frame), style="Accentbutton")
+        # self.close_frame_button.grid(row=1, column=0)
+
+        # self.help_frame.lower()
 
         self.scheduled_frame = ttk.LabelFrame(text="Schedules", width=300, height=250)
         self.scheduled_frame.grid_propagate(False)
